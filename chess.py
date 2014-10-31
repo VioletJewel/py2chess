@@ -45,75 +45,39 @@ class game:
         passwords = [bytearray((231, 245, 229, 243, 244))]
         self.uname = None
         self.pwd = None
-        print "\x1b[0;0H\x1b[34;1mPlease log in\x1b[m (GUEST   username: guest  password: guest)"
         tries = 0
+        print "\x1b[0;0H\x1b[35;1mAt any time: ctrl+c to restart  ctrl+d to quit\n\n\x1b[34m"
         while True:
-            #USERNAME
+            print "\x1b[34;1mPlease log in\x1b[m (GUEST   username: guest  password: guest)"
+            stdout.write("\nUsername may be 40 chars--len of the line to here \x1b[1m|  (ctrl+c to reset; ctrl+d to exit; guest username=guest no password)\n\x1b[50Cv\n\x1b[2K\x1b[1mUSERNAME\x1b[m: \x1b[4m{}\x1b[41D".format(" " * 41))
             try:
-                if self.uname is None:
-                    stdout.write("\x1b[4;0HUsername may be 40 chars--len of the line to here \x1b[1m|  (ctrl+c to reset; ctrl+d to exit; guest username=guest no password)\n\x1b[50Cv\n\x1b[2K\x1b[1mUSERNAME\x1b[m: \x1b[4m{}\x1b[41D".format(" " * 41))
-                    self.uname = bytearray(raw_input().lower())
-                    # TODO check uname validity
-                    stdout.write("\x1b[m")
+                self.uname = bytearray(raw_input().lower())
             except KeyboardInterrupt:
                 stdout.write("\x1b[m")
                 continue
             except (SystemExit, EOFError):
-                print "\n\n\n\n\x1b[2K\x1b[0;36;1mLogin cancelled\x1b[m"
-                exit(1)
+                print "\n\x1b[0;36;1mLogin cancelled\x1b[m"
+            # TODO check uname validity
             self.uname = bytearray(0xff ^ b for b in self.uname)
-            # PASSWORD
+            
+            stdout.write("\x1b[2K\n\x1b[1mPASSWORD\x1b[m: ")
+            term("stty -echo")
             try:
-                stdout.write("\x1b[8;0H\x1b[2K\n\x1b[1mPASSWORD\x1b[m: ")
-                term("stty -echo")
                 self.pwd = bytearray(raw_input())
                 term("stty echo")
             except KeyboardInterrupt:
                 term("stty echo")
-                continue
             except (SystemExit, EOFError):
                 term("stty echo")
-                print "\n\x1b[2K\x1b[36;1mLogin cancelled\x1b[m"
-                exit(1)
+            self.pwd = bytearray(0x80 ^ b for b in self.pwd)
             
-            invChars = []
-            if len(self.pwd) > 40 or len(self.pwd) < 5:
-                print "\n\x1b[2KPassword length must be greater less than or equal 40 and greater than or equal to 5"
-                self.pwd = None
-            else:
-                for b in self.pwd:
-                    if b < 33 or b > 126:
-                        if chr(b) not in invChars:
-                            invChars.append(chr(b))
-                if len(invChars) > 0:
-                    self.pwd = None
-                    print "\n\x1b[2Kpassword has invalid characters {}\n\npassword may only contain the following characters:{}".format(list(invChars), "".join(list(chr(i) for i in range(33, 127))))
-                self.pwd = bytearray(0x80 ^ b for b in self.pwd)
-            
-            self.user = None
             for u, p in zip(usernames, passwords):
-                if u == self.uname:
-                    self.user = "".join(chr(0xff ^ b) for b in self.uname)
-                    if p != self.pwd:
-                        self.pwd = None
-                        tries += 1
-                    break
-            if self.user is not None and self.pwd is not None or tries == 5:
-                break
-            elif self.pwd is None:
-                print "\n\x1b[31;1mIncorrect password\x1b[m"
-            else:
-                try: b = raw_input("\n\n(ctrl+c to reset  ctrl+d to exit)\n\x1b[35;1mNo such user exists; create this account? [Y/n] \x1b[m")
-                except KeyboardInterrupt:
-                    stdout.write("\x1b[2K\x1b[1A\x1b[2K")
-                    self.uname = None
-                    continue
-                except (SystemExit, EOFError):
-                    print "\n\x1b[2K\x1b[36;1mLogin cancelled\x1b[m"
-            
-        if tries == 5:
-            print "\n\n\x1b[31;1m4 failed logins\x1b[m"
-            exit(2)
+                if u == self.uname and p == self.pwd:
+                    self.user = str(0xff ^ b for b in self.uname)
+                print "\x1b[31;1mTry again\x1b[m"
+            if tries == 5:
+                print "\n\n\x1b[31;1m4 failed logins\x1b[m"
+                return 2
         
         print "\n\n\x1b[2Kuser:", self.user
         print "\x1b[2Kusername:", bytearray(0xff ^ b for b in self.uname), "password:", bytearray(0x80 ^ b for b in self.pwd)
