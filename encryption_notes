@@ -1,0 +1,54 @@
++~~~~~~~~~~~~~~~~~+
+| ENCRYPTED FILES | (no \n's used)
++~~~~~~~~~~~~~~~~~+
+  notes:  p1 = trad. white (first to move)
+          p2 = trad. black (second to move)
+
+          username and password are always encrypted (different encryption for each)
+          username encryption: bytearray(0x80 ^ b for b in bytearray(uname))
+          password encryption: bytearray(0xff ^ b for b in bytearray(paswd))
+
+          future: encryption random 'xor-er' as first byte that tells what to xor for the rest
+                  then (further in future) add more encryption for password
+
+
+  CHESS GAME
+  ~~~~~~~~~~
+      SHARED DATA
+      -----------
+        FIRST BYTE     | [turn: 0=p1 255=p2]  * 1 byte
+        
+        FOLLOWING BYTES| [len] [p1 nam]       * 1 + len  bytes
+        (len val)      | [len] [p1 pwd]       * 1 + len  bytes
+        or             | [p1 elo]             * 8d  bytes
+        (val)          | [len] [p2 nam]       * 1 + len  bytes
+                       | [len] [p2 pwd]       * 1 + len  bytes
+                       | [p2 elo]             * 8d  bytes
+
+      LOCAL DATA
+      ----------
+        COLOR| [len] [bg (excl. 4)]   * 1 + len  bytes
+             | [len] [usr's color]    * 1 + len  bytes
+             | [len] [opp's color]    * 1 + len  bytes
+
+
+  ENCRYPTED DATA
+  ~~~~~~~~~~~~~~
+      USER INFORMATION (local)
+      ----------------
+        USERS| [len] [username]   * 1 + len  bytes
+        ^    | [len] [password]   * 1 + len  bytes
+        |    | [elo]              * 8d  bytes
+        |    | [timestamp]        * 8d  bytes
+        +~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ repeat for every new user
+
+      GAME INFORMATION (local)
+      ----------------
+        GAME| [pieces]          * 64  bytes
+            | [moves]           * 1 + len  bytes
+            | [\x00\xff]        * 2  bytes
+            | [len] [bg]        * 1 + len  bytes
+            | [len] [p1 name]   * 1 + len  bytes
+            | [len] [p1 color]  * 1 + len  bytes
+            | [len] [p2 name]   * 1 + len  bytes
+            | [len] [p2 color]  * 1 + len  bytes
