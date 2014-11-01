@@ -3,7 +3,7 @@ __author__ = "Violet"
 
 
 # IMPORTS
-from os import system as term
+from os import chdir as cd, makdirs, system as term
 from os.path import expanduser as expu, isdir, isfile
 from random import random
 from struct import pack, unpack
@@ -20,7 +20,8 @@ except ImportError:
 
 def main():
     g = game()
-    g.newGame()
+    g.initUser()
+    g.play()
 
 
 # GAME CLASS
@@ -33,6 +34,151 @@ class game:
         self.fd = stdin.fileno()
         self.old_settings = getat(self.fd)
         self.buffer = 4
+        cd(expu("~"))
+        try:
+            mkdirs(".chess/.  ..")
+        except OSError:
+            pass
+        
+    
+    def initUser(self):
+        i = self.menu(("login", "setup new account", "delete an account"))
+        if i == 0 and self.unames > 0:
+            self.login()
+        elif i == 1 or i == 0:
+            self.newAccount()
+        else:
+            exit(0)
+    
+    
+    def newAccount(self):
+        stdout.write("\x1b[0;0H\x1b[J")
+        usernames = bytearray()
+        passwords = bytearray()
+        self.uname = None
+        self.pwd = None
+        uname = None
+        pwd = None
+        tries = 0
+        print "\x1b[0;0H\x1b[J\x1b[34;1mPlease log in...\x1b[m   (GUEST   username=guest  password=guest\nusernames and passwords may only be \x1b[4m40\x1b[m characters long"
+        while True:
+            stdout.write("\x1b[6;0HUSERNAME: ")
+            if uname is None:
+                try:
+                    uname = bytearray(raw_input())
+                except KeyboardInterrupt:
+                    uname = None
+                    continue
+                except (SystemExit, EOFError):
+                    print "\n\x1b[36;1mlogin aborted\x1b[m"
+                    exit(2)
+            else:
+                print uname
+            
+            stdout.write("PASSWORD: ")
+            term("stty -echo")
+            try:
+                pwd = bytearray(raw_input())
+            except KeyboardInterrupt:
+                continue
+            except (SystemExit, EOFError):
+                print "\n\x1b[36;1mlogin aborted\x1b[m"
+                exit(2)
+            finally:
+                term("stty echo")
+            
+            user = uname
+            uname = bytearray(0xff ^ b for b in uname)
+            pwd = bytearray(0x80 ^ b for b in pwd)
+            
+            for u, p in zip(usernames, passwords):
+                if u == uname and p == pwd:
+                    self.uname = uname
+                    self.pwd = pwd
+                    break
+                tries += 1
+            
+            if self.uname is not None and self.pwd is not None:
+                break
+            
+            if tries == 4:
+                print "\n\x1b[31;1m4 incorrect password attempts\x1b[m"
+                exit(3)
+            
+            print "\x1b[5;0H\x1b[31;1mtry again\x1b[m  (ctrl+c=new username  ctrl+d=exit)"
+            uname = user
+            
+        
+        print "\n\n\x1b[2Kusername:", bytearray(0xff ^ b for b in self.uname), "password:", bytearray(0x80 ^ b for b in self.pwd)
+        
+        raw_input("[Enter]")
+    
+    
+    def login(self):
+        """
+        
+        """
+        stdout.write("\x1b[0;0H\x1b[J")
+        usernames = bytearray()
+        passwords = bytearray()
+        for f in 
+        self.uname = None
+        self.pwd = None
+        uname = None
+        pwd = None
+        tries = 0
+        print "\x1b[0;0H\x1b[J\x1b[34;1mPlease log in...\x1b[m   (GUEST   username=guest  password=guest\nusernames and passwords may only be \x1b[4m40\x1b[m characters long"
+        while True:
+            stdout.write("\x1b[6;0HUSERNAME: ")
+            if uname is None:
+                try:
+                    uname = bytearray(raw_input())
+                except KeyboardInterrupt:
+                    uname = None
+                    continue
+                except (SystemExit, EOFError):
+                    print "\n\x1b[36;1mlogin aborted\x1b[m"
+                    exit(2)
+            else:
+                print uname
+            
+            stdout.write("PASSWORD: ")
+            term("stty -echo")
+            try:
+                pwd = bytearray(raw_input())
+            except KeyboardInterrupt:
+                continue
+            except (SystemExit, EOFError):
+                print "\n\x1b[36;1mlogin aborted\x1b[m"
+                exit(2)
+            finally:
+                term("stty echo")
+            
+            user = uname
+            uname = bytearray(0xff ^ b for b in uname)
+            pwd = bytearray(0x80 ^ b for b in pwd)
+            
+            for u, p in zip(usernames, passwords):
+                if u == uname and p == pwd:
+                    self.uname = uname
+                    self.pwd = pwd
+                    break
+                tries += 1
+            
+            if self.uname is not None and self.pwd is not None:
+                break
+            
+            if tries == 4:
+                print "\n\x1b[31;1m4 incorrect password attempts\x1b[m"
+                exit(3)
+            
+            print "\x1b[5;0H\x1b[31;1mtry again\x1b[m  (ctrl+c=new username  ctrl+d=exit)"
+            uname = user
+            
+        
+        print "\n\n\x1b[2Kusername:", bytearray(0xff ^ b for b in self.uname), "password:", bytearray(0x80 ^ b for b in self.pwd)
+        
+        raw_input("[Enter]")
     
     
     def selectColor(self, desc = "", typ = "3", cInd = 7):
@@ -150,6 +296,19 @@ class game:
             else:
                 pass
         return line
+    
+    
+    def play(self):
+        """
+        
+        """
+        i = self.menu(("start new game", "practice against yourself", "quit"))
+        if i == 0:
+            self.newGame()
+        elif i == 1:
+            self.practice()
+        else:
+            exit(0)
     
     
     def newGame(self):
