@@ -66,11 +66,11 @@ class game:
         print "\x1b[0;0H\x1b[J{}\n".format(desc)
         while ch != 13:
             if shade == 0:
-                print "\x1b[6;0H\x1b[2K\x1b[3{}m{}\x1b[m{}".format(colorMap[lightColors[cInd]], lightColors[cInd], " (recommended)" if (rec[0] == "3" and rec[1] == cInd) else "")
+                print "\x1b[7;0H\x1b[2K\x1b[3{}m{}\x1b[m{}".format(colorMap[lightColors[cInd]], lightColors[cInd], " (recommended)" if (rec[0] == "3" and rec[1] == cInd) else "")
             elif shade == 1:
-                print "\x1b[6;0H\x1b[2K\x1b[3{}m{}\x1b[m".format(colorMap[colors[cInd]], colors[cInd])
+                print "\x1b[7;0H\x1b[2K\x1b[3{}m{}\x1b[m".format(colorMap[colors[cInd]], colors[cInd])
             else:
-                print "\x1b[6;0H\x1b[2K\x1b[3{}m{}\x1b[m{}".format(colorMap[darkColors[cInd]], darkColors[cInd], " (recommended)" if (rec[0] == "4" and rec[1] == cInd) else "")
+                print "\x1b[7;0H\x1b[2K\x1b[3{}m{}\x1b[m{}".format(colorMap[darkColors[cInd]], darkColors[cInd], " (recommended)" if (rec[0] == "4" and rec[1] == cInd) else "")
             
             # wait for user input
             setraw(self.fd)
@@ -157,20 +157,20 @@ class game:
         
         """
         try:
-            bg = self.selectColor("\x1b[2J\x1b[0;0H\x1b[1mSelect a background color (use arrow keys (vim or normal) to navigate)\x1b[m\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c or ctrl+d to use default (RECOMMENDED)", "4", 0)
+            bg = self.selectColor("\x1b[0;0H\x1b[J\x1b[1mSelect a background color\n\tuse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "4", 0)
         except (KeyboardInterrupt, SystemExit):
             bg = None
         try:
-            c1 = self.selectColor("\x1b[1mSelet the color of p1's (\"white's\") pieces\x1b[m (use arrow keys (vim or normal) to navigate)\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c or ctrl+d to use default (RECOMMENDED)", "3", 3)
+            c1 = self.selectColor("\x1b[1mSelet the color of p1's (\"white's\") pieces\x1b[m\n\tuse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "3", 3)
         except (KeyboardInterrupt, SystemExit):
             c1 = None
         try:
-            c2 = self.selectColor("\x1b[1mSelect the color of your p2's (\"black's\") pieces\x1b[m (use arrow keys (vim or normal) to navigate)\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c or ctrl+d to use default (RECOMMENDED)", "3", 4)
+            c2 = self.selectColor("\x1b[1mSelect the color of p2's (\"black's\") pieces\x1b[m\n\tuse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "3", 4)
         except (KeyboardInterrupt, SystemExit):
             c2 = None
         
         b = board()
-        stdout.write("\x1b[2J")
+        stdout.write("\x1b[0;0H\x1b[J")
         if random() >= .5:
             try: raw_input("You are playing as player one (\"white\" pieces in conventional chess) [Enter]")
             except (KeyboardInterrupt, SystemExit): pass
@@ -186,15 +186,15 @@ class game:
         
         """
         try:
-            bg = self.selectColor("\x1b[2J\x1b[0;0H\x1b[1mBACKGROUND COLOR (use arrow keys (vim or normal) to navigate)\x1b[m\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c or ctrl+d to use default (RECOMMENDED)", "4", 0)
+            bg = self.selectColor("\x1b[0;0H\x1b[J\x1b[1mBACKGROUND COLOR\n\tuse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "4", 0)
         except (KeyboardInterrupt, SystemExit):
             bg = None
         try:
-            c1 = self.selectColor("\x1b[1mP1's (\"white's\") COLOR\x1b[m (use arrow keys (vim or normal) to navigate)\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c or ctrl+d to use default (RECOMMENDED)", "3", 3)
+            c1 = self.selectColor("\x1b[1mP1's (\"white's\") COLOR\x1b[muse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "3", 3)
         except (KeyboardInterrupt, SystemExit):
             c1 = None
         try:
-            c2 = self.selectColor("\x1b[1mP2's (\"black's\") COLOR\x1b[m (use arrow keys (vim or normal) to navigate)\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c or ctrl+d to use default (RECOMMENDED)", "3", 4)
+            c2 = self.selectColor("\x1b[1mP2's (\"black's\") COLOR\x1b[muse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "3", 4)
         except (KeyboardInterrupt, SystemExit):
             c2 = None
         
@@ -231,18 +231,15 @@ class board:
                             6:"P", 12:"P",}
     
     
-    def play(self, once=False, **kwargs): # TODO: what to do once is True vs False vs None.....
+    def play(self, once=False, **kwargs):
         """
         
         """
         keys = bytearray([0, 0, 0, 0])
         self.curpos = 0 # 0-63
-        print "\x1b[2J\x1b[m"
-        self.selected = None
-        removed = []
-        moves = []
-        #redo_removed = []
-        #redo_moves = []
+        print "\x1b[0;0H\x1b[J\x1b[m"
+        movesInd = -1
+        self.selected = None # piece currently selected
         self.bg = kwargs.get("bg", None)
         self.c1 = kwargs.get("c1", None)
         self.c2 = kwargs.get("c2", None)
@@ -256,11 +253,12 @@ class board:
         
         stdout.write("\x1b[?25l")
         while True:
-            # gather graphical board information
-            gr = self.getGraphicalChars()
+            print self.getGraphicalChars()
             
-            # print board
-            print gr
+            #print "\x1b[2Kkeys:", list(keys)
+            print "moves:"
+            print self.moveLog
+            #print "\x1b[2Kpieces removed:", removed
             
             # wait for user input
             setraw(self.fd)
@@ -287,11 +285,6 @@ class board:
                     self.curpos += 56
                 else:
                     self.curpos -= 8
-            elif keys[0] == 26: # 'ctrl+z'
-                if len(removed) > 0:
-                    old = moves.pop()                               # the old pos (where piece came from)
-                    self.pieces[moves.pop()] = self.pieces[old]     # restore old position before it is changed
-                    self.pieces[old] = removed.pop()                # restore the last piece removed
             elif keys[0] == 108 or keys[2] == 27 and keys[1] == 91 and keys[0] == 67: # 'l' or '[right]'
                 #print "right"
                 if self.curpos % 8 == 7: # cursor in last column
@@ -302,33 +295,44 @@ class board:
                 #print "[Enter]"
                 if self.selected is None:
                     self.selected = self.curpos
-                elif self.curpos != self.selected:
-                    removed.append(self.pieces[self.curpos])                # store what piece will be removed
-                    moves.append(self.selected)                             # store to moves what is advanced
-                    moves.append(self.curpos)                               # store to moves what is removed
-                    #self.moveLog.append("{}{}{}".format(self.pieceMap[self.pieces[self.selected] if self.selected != "\x06" and self.selected != "\x0c" else "",
-                    #                                  self. + 97, ##!!
-                    #                                  ,
-                    #                                  ))
-                    self.pieces[self.curpos] = self.pieces[self.selected]   # replace the current position with previously self.selected location 
+                elif self.curpos == self.selected:
+                    self.selected = None
+                else:
+                    self.moveLog.extend("  ")
+                    if self.pieces[self.selected] != 0x06 and self.pieces[self.selected] != 0x0c:
+                        self.moveLog.extend(self.pieceMap[self.pieces[self.selected]])
+                    if self.pieces[self.curpos] != 0:
+                        if self.pieces[self.selected] == 0x06 or self.pieces[self.selected] == 0x0c:
+                            self.moveLog.extend(chr(self.selected % 8 + 97))
+                        self.moveLog.extend("x")
+                    # TODO
+                    if 0: # TODO if similar piece can move to same square
+                        if 0: # TODO if pieces are on same rank (row)
+                            self.moveLog.extend(chr(self.selected % 8 + 97))
+                        if 0: # TODO if pieces are on same file (col)
+                            self.moveLog.extend(chr(56 - self.selected / 8))
+                    self.moveLog.extend(chr(self.curpos % 8 + 97))
+                    self.moveLog.extend(chr(56 - self.curpos / 8))
+                    
+                    self.pieces[self.curpos] = self.pieces[self.selected]   # replace the current position with previously self.selected location
                     self.pieces[self.selected] = "\x00"                     # replace the previously self.selected location with blank
                     self.selected = None                                    # reset self.selected to None because nothing is self.selected
-                else:
-                    self.selected = None
-                if once and self.selected is None:
-                    print self.getGraphicalChars()
-                    once = None
-                    stdout.write("\x1b[m\x1b[?25h")
-            elif keys[0] == 3: # 'ctrl+c'
+            elif keys[0] == 26: # 'ctrl+z' (undo)
+                if len(removed) > 0:
+                    old = moves.pop()                               # the old pos (where piece came from)
+                    self.pieces[moves.pop()] = self.pieces[old]     # restore old position before it is changed
+                    self.pieces[old] = removed.pop()                # restore the last piece removed
+            elif keys[0] == 25: # 'ctrl+y' (redo)
+                pass
+            elif keys[0] == 18: # 'ctrl+r' (refresh)
+                stdout.write("\x1b[0;0H\x1b[J")
+            elif keys[0] == 3: # 'ctrl+c' (unselect piece)
                 self.selected = None
-            elif keys[0] == 4: # 'ctrl+d'
+            elif keys[0] == 4: # 'ctrl+d' (exit)
                 stdout.write("\x1b[m\x1b[?25h")
                 break
             else:
                 pass
-            print "\x1b[2Kkeys:", list(keys)
-            #print "\x1b[2Kpieces removed:", removed
-            #print "\x1b[2Kkeys:", repr(str(keys))
     
 
     def getGraphicalChars(self):
@@ -337,11 +341,11 @@ class board:
         """
         gr = bytearray("\x1b[0;0H\x1b[4{}m".format(self.bg)) # graphical representation of pieces
         for i, piece in enumerate(unpack(">64B", self.pieces)):
-            if i % 8 == 0:
+            if i % 8 == 0: # x == 0
                 gr.extend("\n{}{}\x1b[27m \x1b[m \x1b[4{}m|".format("\x1b[7m" if int(i / 8.0) == int(self.curpos / 8.0) else "", 8 - int(i / 8.0), self.bg))
-            if piece > 6:
+            if piece > 6: # p2 (black in conv. chess)
                 gr.extend("\x1b[21;22;3{}m".format(self.c2))
-            elif piece > 0:
+            elif piece > 0: # p1 (white in conv. chess)
                 gr.extend("\x1b[21;22;3{}m".format(self.c1))
             if i == self.curpos:
                 gr.extend("\x1b[7m")
@@ -356,4 +360,9 @@ class board:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        term("stty echo")
+        stdout.write("\x1b[m\x1b[0;0H\x1b[J")
+        
