@@ -302,7 +302,7 @@ class board:
                 else:
                     self.curpos += 1
             elif keys[0] == 13 or keys[0] == 32: # '[Enter]' or '[space]'
-                if self.selected is None:
+                if self.selected is None: # first enter
                     if self.pieces[self.curpos] > 6:
                         if self.moveNum % 2 == 0:
                             continue
@@ -310,9 +310,9 @@ class board:
                         continue
                     if self.pieces[self.curpos] != 0:
                         self.selected = self.curpos
-                elif self.curpos == self.selected:
+                elif self.curpos == self.selected: # second enter but same piece
                     self.selected = None
-                else:
+                else: # second enter
                     #TODO make move validation better
                     if not self.valMove():
                         continue
@@ -320,10 +320,10 @@ class board:
                         self.moveLog.append(bytearray())
                         self.moveLog[-1].extend("{}.".format(self.moveNum / 2 + 1))
                     self.moveLog[-1].extend(" ")
-                    if self.pieces[self.selected] != 0x06 and self.pieces[self.selected] != 0x0c:
+                    if self.pieces[self.selected] != 6 and self.pieces[self.selected] != 12:
                         self.moveLog[-1].extend(self.pieceMap[self.pieces[self.selected]])
                     if self.pieces[self.curpos] != 0:
-                        if self.pieces[self.selected] == 0x06 or self.pieces[self.selected] == 0x0c:
+                        if self.pieces[self.selected] == 6 or self.pieces[self.selected] == 12:
                             self.moveLog[-1].extend(chr(self.selected % 8 + 97))
                         self.moveLog[-1].extend("x")
                     # TODO
@@ -357,39 +357,38 @@ class board:
                     self.moveLog = self.moveLog[:-1]
                     self.moveLog.append(" ".join(str(extra).split(" ")[:-1]))
                 
-                self.pieces[fullMove["from"]] = fullMove["victor"]
-                self.pieces[fullMove["to"]] = fullMove["captured"]
+                self.pieces[fullMove["from"]] = fullMove["victor"] # victor goes back whence he came
+                self.pieces[fullMove["to"]] = fullMove["captured"] # the captured piece is restored
                 
                 repaint = True
             elif keys[0] == 25: # 'ctrl+y' (redo)
-                continue # TODO
                 if self.moveNum == len(self.fullMoves) - 1:
                     continue
-                self.moveNum += 1
                 fullMove = self.fullMoves[self.moveNum]
                 
                 if self.moveNum % 2 == 0:
                     self.moveLog.append(bytearray())
                     self.moveLog[-1].extend("{}.".format(self.moveNum / 2 + 1))
                 self.moveLog[-1].extend(" ")
-                if self.pieces[self.selected] != 0x06 and self.pieces[self.selected] != 0x0c:
-                    self.moveLog[-1].extend(self.pieceMap[self.pieces[self.selected]])
-                if self.pieces[self.curpos] != 0:
-                    if self.pieces[self.selected] == 0x06 or self.pieces[self.selected] == 0x0c:
-                        self.moveLog[-1].extend(chr(self.selected % 8 + 97))
+                if fullMove["victor"] != 0x06 and fullMove["victor"] != 0x0c:
+                    self.moveLog[-1].extend(self.pieceMap[fullMove["vitor"]])
+                if fullMove["captured"] != 0:
+                    if fullMove["victor"] == 0x06 or fullMove["victor"] == 0x0c:
+                        self.moveLog[-1].extend(chr(fullMove["from"] % 8 + 97))
                     self.moveLog[-1].extend("x")
                 # TODO
                 if 0: # TODO if similar piece can move to same square
                     if 0: # TODO if pieces are on same rank (row)
-                        self.moveLog[-1].extend(chr(self.selected % 8 + 97))
+                        self.moveLog[-1].extend(chr(fullMove["from"] % 8 + 97))
                     if 0: # TODO if pieces are on same file (col)
-                        self.moveLog[-1].extend(chr(56 - self.selected / 8))
-                self.moveLog[-1].extend(chr(self.curpos % 8 + 97))
-                self.moveLog[-1].extend(chr(56 - self.curpos / 8))
+                        self.moveLog[-1].extend(chr(56 - fullMove["from"] / 8))
+                self.moveLog[-1].extend(chr(fullMove["to"] % 8 + 97))
+                self.moveLog[-1].extend(chr(56 - fullMove["to"] / 8))
                 
-                self.pieces[fullMove["to"]] = fullMove["victor"]
-                self.pieces[fullMove["from"]] = "\x00"
+                self.pieces[fullMove["to"]] = fullMove["victor"] # victor reconquers again
+                self.pieces[fullMove["from"]] = "\x00"           # victor leaves old square empty
                 
+                self.moveNum += 1
                 repaint = True
             elif keys[0] == 18: # 'ctrl+r' (refresh)
                 stdout.write("\x1b[0;0H\x1b[J")
@@ -432,11 +431,12 @@ class board:
                 if self.selected - self.curpos == -8 or self.selected - self.curpos == -16 and self.selected / 8 == 1:
                     return True
             return False
+        
         return self.curpos - self.selected in self.sloppyValMove[self.pieces[self.selected] % 6]
     
     
-    def kingAttcked(self):
-        if self.moveNum % 2 == 0:
+    def kingAttcked(self): # TODO
+        if self.moveNum % 2 == 0: # don't need (neither king can be attacked)
             return False
         else:
             return False
