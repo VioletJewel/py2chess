@@ -277,7 +277,7 @@ class board:
             0 = nothing
             1 = castle queen-side
             2 = castle king-side
-            3 = en passent
+            3 = en passant
             4 = pawn promotion
         """
         self.specialMove = 0
@@ -401,7 +401,7 @@ class board:
                     continue
                 self.selected = None
                 self.moveNum -= 1
-                fullMove = self.fullMoves[self.moveNum]
+                self.fullMove = self.fullMoves[self.moveNum]
                 
                 if self.moveNum % 2 == 0: # transitioning from black to (currently) white move # len(self.moveLog[-1].split(" ")) == 2: # only one move after number
                     self.moveLog = self.moveLog[:-1]
@@ -410,38 +410,48 @@ class board:
                     self.moveLog = self.moveLog[:-1]
                     self.moveLog.append(bytearray(" ".join(str(extra).split(" ")[:-1])))
                 
-                self.pieces[fullMove["from"]] = fullMove["victor"] # victor goes back whence he came
-                self.pieces[fullMove["to"]] = fullMove["captured"] # the captured piece is restored
+                self.pieces[self.fullMove["from"]] = self.fullMove["victor"] # victor goes back whence he came
+                self.pieces[self.fullMove["to"]] = self.fullMove["captured"] # the captured piece is restored
                 
                 # TODO check for all flags
-                # TODO properly implement castling flag
-                if fullMove["flag"] == 1:
+                # TODO properly implement castling flag (not working)
+                if self.fullMove["flag"] == 1:
                     if self.moveNum % 2 == 0:
                         self.pieces[63] = 3
                     else:
                         self.pieces[7] = 9
-                elif fullMove["flag"] == 2:
+                elif self.fullMove["flag"] == 2:
                     if self.moveNum % 2 == 0:
                         self.pieces[56] = 3
                     else:
                         self.pieces[0] = 9
                 
                 
-                self.fullMoves = self.fullMoves[:self.moveNum]
+                #self.fullMoves = self.fullMoves[:self.moveNum]
                 
                 repaint = True
             elif keys[0] == 25: # 'ctrl+y' (redo)
-                if self.moveNum == len(self.fullMoves) - 1:
+                if self.moveNum == len(self.fullMoves):
                     continue
-                self.selected = None
-                fullMove = self.fullMoves[self.moveNum]
+                
+                tempCurpos = self.curpos
+                
+                self.fullMove = self.fullMoves[self.moveNum]
+                self.selected = self.fullMove["from"]
+                self.curpos = self.fullMove["to"]
                 
                 self.writeMoveLog()
                 
-                self.pieces[fullMove["to"]] = fullMove["victor"] # victor reconquers
-                self.pieces[fullMove["from"]] = "\x00"           # victor leaves old square empty
+                self.pieces[self.selected] = "\x00"
+                self.pieces[self.curpos] = self.fullMove["victor"]
+                
+                self.pieces[self.fullMove["to"]] = self.fullMove["victor"] # victor reconquers
+                self.pieces[self.fullMove["from"]] = "\x00"           # victor leaves old square empty
                 
                 self.moveNum += 1
+                
+                self.curpos = tempCurpos
+                self.selected = None
                 repaint = True
             elif keys[0] == 18: # 'ctrl+r' (refresh)
                 stdout.write("\x1b[0;0H\x1b[J")
@@ -467,37 +477,37 @@ class board:
         self.moveLog[-1].extend(" ")
         
         # check for special moves
-        if specialMove == 1: # O-O
+        if self.specialMove == 1: # O-O
             self.moveLog.write("O-O")
-            specialMove = 0
+            self.specialMove = 0
             return
-        elif specialMove == 2: # O-O-O
+        elif self.specialMove == 2: # O-O-O
             self.moveLog.write("O-O-O")
-            specialMove = 0
+            self.specialMove = 0
             return
-        elif specialMove == 4: # pawn promotion
+        elif self.specialMove == 4: # pawn promotion
             # TODO
-            specialMove = 0
+            self.specialMove = 0
             return
         
-        if fullMove["victor"] % 6 != 0:
-            self.moveLog[-1].extend(self.pieceMap[fullMove["victor"]])
-        if fullMove["captured"] != 0:
-            if fullMove["victor"] % 6 == 0:
-                self.moveLog[-1].extend(chr(fullMove["from"] % 8 + 97))
+        if self.fullMove["victor"] % 6 != 0:
+            self.moveLog[-1].extend(self.pieceMap[self.fullMove["victor"]])
+        if self.fullMove["captured"] != 0:
+            if self.fullMove["victor"] % 6 == 0:
+                self.moveLog[-1].extend(chr(self.fullMove["from"] % 8 + 97))
             self.moveLog[-1].extend("x")
         # TODO
         if 0: # TODO if similar piece can move to same square
             if 0: # TODO if pieces are on same rank (row)
-                self.moveLog[-1].extend(chr(fullMove["from"] % 8 + 97))
+                self.moveLog[-1].extend(chr(self.fullMove["from"] % 8 + 97))
             if 0: # TODO if pieces are on same file (col)
-                self.moveLog[-1].extend(chr(56 - fullMove["from"] / 8))
-        self.moveLog[-1].extend(chr(fullMove["to"] % 8 + 97))
-        self.moveLog[-1].extend(chr(56 - fullMove["to"] / 8))
+                self.moveLog[-1].extend(chr(56 - self.fullMove["from"] / 8))
+        self.moveLog[-1].extend(chr(self.fullMove["to"] % 8 + 97))
+        self.moveLog[-1].extend(chr(56 - self.fullMove["to"] / 8))
     
-        if specialMove == 3: # en passent
+        if self.specialMove == 3: # en passant
             self.moveLog.write(" ep")
-            specialMove = 0
+            self.specialMove = 0
             return
     
     def valMove(self):
@@ -516,24 +526,24 @@ class board:
                 if self.curpos - self.selected == -2 and map(sum, (self.pieces[57:60],))[0] == 0 and not self.rookMoved[0]: # TODO check if king attacked on way over
                     self.pieces[59] = 3
                     self.pieces[56] = 0
-                    specialMove = 1
+                    self.specialMove = 1
                     return True
                 elif self.curpos - self.selected == 2 and self.pieces[61] + self.pieces[62] == 0 and not self.rookMoved[1]:
                     self.pieces[61] = 3
                     self.pieces[63] = 0
-                    specialMove = 2
+                    self.specialMove = 2
                     return True
         elif self.pieces[self.selected] == 7:
             if not self.kingMoved[1]:
                 if self.curpos - self.selected == -2 and map(sum, (self.pieces[1:4],))[0] == 0 and not self.rookMoved[2]:
                     self.pieces[3] = 9
                     self.pieces[0] = 0
-                    specialMove = 1
+                    self.specialMove = 1
                     return True
                 elif self.curpos - self.selected == 2 and self.pieces[5] + self.pieces[6] == 0 and not self.rookMoved[3]:
                     self.pieces[5] = 9
                     self.pieces[7] = 0
-                    specialMove = 2
+                    self.specialMove = 2
                     return True
             if not self.kingMoved[0] and (self.curpos - self.selected == -2 or self.curpos - self.selected == 2):
                 return True
