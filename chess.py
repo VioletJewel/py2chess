@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 __author__ = "Violet"
 
@@ -111,7 +111,9 @@ class game:
                     return "{};2".format(cInd)
                 else:
                     return str(cInd)
-            elif keys[0] == 3 or keys[0] == 4: # 'ctrl+c' or 'ctrl+d'
+            elif keys[0] == 3: # 'ctrl+c''
+                return 0
+            elif keys[0] == 4: # 'ctrl+d'
                 exit(0)
     
     
@@ -157,16 +159,16 @@ class game:
         
         """
         try:
-            bg = self.selectColor("\x1b[0;0H\x1b[J\x1b[1mSelect a background color\n\tuse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "4", 0)
-        except (KeyboardInterrupt, SystemExit):
+            bg = self.selectColor("\x1b[0;0H\x1b[J\x1b[1mSelect a background color\x1b[m\n\tctrl+c to use default (RECOMMENDED)\n\tctrl+d to exit", "4", 0)
+        except KeyboardInterrupt:
             bg = None
         try:
-            c1 = self.selectColor("\x1b[1mSelet the color of p1's (\"white's\") pieces\x1b[m\n\tuse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "3", 3)
-        except (KeyboardInterrupt, SystemExit):
+            c1 = self.selectColor("\x1b[1mSelet the color of p1's (\"white's\") pieces\x1b[m\n\tctrl+c to use default (RECOMMENDED)\n\tctrl+d to exit", "3", 3)
+        except KeyboardInterrupt:
             c1 = None
         try:
-            c2 = self.selectColor("\x1b[1mSelect the color of p2's (\"black's\") pieces\x1b[m\n\tuse arrow keys (vim or normal) to navigate\n\tup/down to change color\n\tleft/right to lighten/darken\n\tctrl+c to use default (RECOMMENDED)", "3", 4)
-        except (KeyboardInterrupt, SystemExit):
+            c2 = self.selectColor("\x1b[1mSelect the color of p2's (\"black's\") pieces\x1b[m\n\tctrl+c to use default (RECOMMENDED)\n\tctrl+d to exit", "3", 4)
+        except KeyboardInterrupt:
             c2 = None
         
         b = board()
@@ -221,22 +223,38 @@ class board:
                                   6, 6, 6, 6, 6, 6, 6, 6,
                                   3, 5, 4, 2, 1, 4, 5, 3,])
         
-        self.pieceMap = { 0:" ",
-                          1:"K", 7:"K",
-                          2:"Q", 8:"Q",
-                          3:"R", 9:"R",
-                          4:"B", 10:"B",
-                          5:"N", 11:"N",
-                          6:"P", 12:"P",}
+        self.pieceMap = {0:" ",
+                         1:"K", 7: "K",
+                         2:"Q", 8: "Q",
+                         3:"R", 9: "R",
+                         4:"B", 10:"B",
+                         5:"N", 11:"N",
+                         6:"P", 12:"P",}
         
         
-        self.sloppyValMove = { 1:[-9, -8, -7, -1, 1, 7, 8, 9],
-                                2:[-9, -8, -7, -1, 1, 7, 8, 9],
-                                3:[-8, -1, 1, 9],
-                                4:[-9, -7, 7, 9],
-                                5:[-17, -15, -10, -6, 6, 10, 15, 17],}
+        self.validMoves = bytearray((1,0,0,0,0,0,0,2,0,0,0,0,0,0,1,
+                                     0,1,0,0,0,0,0,2,0,0,0,0,0,1,0,
+                                     0,0,1,0,0,0,0,2,0,0,0,0,1,0,0,
+                                     0,0,0,1,0,0,0,2,0,0,0,1,0,0,0,
+                                     0,0,0,0,1,0,0,2,0,0,1,0,0,0,0,
+                                     0,0,0,0,0,1,3,2,3,1,0,0,0,0,0,
+                                     0,0,0,0,0,3,4,5,4,3,0,0,0,0,0,
+                                     2,2,2,2,2,2,6,0,6,2,2,2,2,2,2,
+                                     0,0,0,0,0,3,7,6,7,3,0,0,0,0,0,
+                                     0,0,0,0,0,1,3,2,3,1,0,0,0,0,0,
+                                     0,0,0,0,1,0,0,2,0,0,1,0,0,0,0,
+                                     0,0,0,1,0,0,0,2,0,0,0,1,0,0,0,
+                                     0,0,1,0,0,0,0,2,0,0,0,0,1,0,0,
+                                     0,1,0,0,0,0,0,2,0,0,0,0,0,1,0,
+                                     1,0,0,0,0,0,0,2,0,0,0,0,0,0,1,))
         
-        self.longMovers = [2, 3, 4]
+        self.pieceGroups = {1:(4,5,6,7,),
+                            2:(1,2,4,5,6,7,),
+                            3:(2,5,6,),
+                            4:(1,4,7,),
+                            5:(3,),
+                            0:(5,),
+                            7:(4,)}
     
     
     def play(self, once=False, **kwargs):
@@ -246,9 +264,24 @@ class board:
         keys = bytearray([0, 0, 0, 0])
         self.curpos = 56 # 0-63
         self.moveNum = 0
+        
         self.moveLog = []
         self.fullMoves = []
+        
         self.selected = None # piece currently selected
+        
+        self.kingMoved = [False, False]
+        self.rookMoved = [False, False, False, False]
+        
+        """
+            0 = nothing
+            1 = castle queen-side
+            2 = castle king-side
+            3 = en passent
+            4 = pawn promotion
+        """
+        self.specialMove = 0
+        
         self.bg = kwargs.get("bg", None)
         self.c1 = kwargs.get("c1", None)
         self.c2 = kwargs.get("c2", None)
@@ -313,13 +346,13 @@ class board:
                 elif self.curpos == self.selected: # second enter but same piece
                     self.selected = None
                 else: # second enter
-                    #TODO make move validation better
                     if not self.valMove():
                         continue
-                    if self.moveNum % 2 == 0:
+                    if self.moveNum % 2 == 0: # white (new row)
                         self.moveLog.append(bytearray())
                         self.moveLog[-1].extend("{}.".format(self.moveNum / 2 + 1))
                     self.moveLog[-1].extend(" ")
+                    
                     if self.pieces[self.selected] != 6 and self.pieces[self.selected] != 12:
                         self.moveLog[-1].extend(self.pieceMap[self.pieces[self.selected]])
                     if self.pieces[self.curpos] != 0:
@@ -332,10 +365,15 @@ class board:
                             self.moveLog[-1].extend(chr(self.selected % 8 + 97))
                         if 0: # TODO if pieces are on same file (col)
                             self.moveLog[-1].extend(chr(56 - self.selected / 8))
+                    
                     self.moveLog[-1].extend(chr(self.curpos % 8 + 97))
                     self.moveLog[-1].extend(chr(56 - self.curpos / 8))
                     
-                    self.fullMoves.append({"from":self.selected, "to":self.curpos, "captured":self.pieces[self.curpos], "victor":self.pieces[self.selected]})
+                    self.fullMoves.append({"from":self.selected,
+                                           "to":self.curpos,
+                                           "captured":self.pieces[self.curpos],
+                                           "victor":self.pieces[self.selected],
+                                           "flag":self.specialMove})
                     
                     self.pieces[self.curpos] = self.pieces[self.selected]   # replace the current position with previously self.selected location
                     self.pieces[self.selected] = "\x00"                     # replace the previously self.selected location with blank
@@ -343,10 +381,25 @@ class board:
                     
                     self.moveNum += 1
                     
+                    if self.curpos == 60 or self.selected == 60:
+                        self.kingMoved[0] = True
+                    elif self.curpos == 4 or self.selected == 4:
+                        self.kingMoved[1] = True
+                    
+                    if self.curpos == 56 or self.selected == 56:
+                        self.rookMoved[0] = True
+                    elif self.curpos == 56 or self.selected == 56:
+                        self.rookMoved[1] = True
+                    elif self.curpos == 0 or self.selected == 0:
+                        self.rookMoved[2] = True
+                    elif self.curpos == 0 or self.selected == 7:
+                        self.rookMoved = True
+                    
                     repaint = True
             elif keys[0] == 26: # 'ctrl+z' (undo)
                 if self.moveNum == 0:
                     continue
+                self.selected = None
                 self.moveNum -= 1
                 fullMove = self.fullMoves[self.moveNum]
                 
@@ -355,37 +408,37 @@ class board:
                 else:
                     extra = self.moveLog[-1]
                     self.moveLog = self.moveLog[:-1]
-                    self.moveLog.append(" ".join(str(extra).split(" ")[:-1]))
+                    self.moveLog.append(bytearray(" ".join(str(extra).split(" ")[:-1])))
                 
                 self.pieces[fullMove["from"]] = fullMove["victor"] # victor goes back whence he came
                 self.pieces[fullMove["to"]] = fullMove["captured"] # the captured piece is restored
+                
+                # TODO check for all flags
+                # TODO properly implement castling flag
+                if fullMove["flag"] == 1:
+                    if self.moveNum % 2 == 0:
+                        self.pieces[63] = 3
+                    else:
+                        self.pieces[7] = 9
+                elif fullMove["flag"] == 2:
+                    if self.moveNum % 2 == 0:
+                        self.pieces[56] = 3
+                    else:
+                        self.pieces[0] = 9
+                
+                
+                self.fullMoves = self.fullMoves[:self.moveNum]
                 
                 repaint = True
             elif keys[0] == 25: # 'ctrl+y' (redo)
                 if self.moveNum == len(self.fullMoves) - 1:
                     continue
+                self.selected = None
                 fullMove = self.fullMoves[self.moveNum]
                 
-                if self.moveNum % 2 == 0:
-                    self.moveLog.append(bytearray())
-                    self.moveLog[-1].extend("{}.".format(self.moveNum / 2 + 1))
-                self.moveLog[-1].extend(" ")
-                if fullMove["victor"] != 0x06 and fullMove["victor"] != 0x0c:
-                    self.moveLog[-1].extend(self.pieceMap[fullMove["vitor"]])
-                if fullMove["captured"] != 0:
-                    if fullMove["victor"] == 0x06 or fullMove["victor"] == 0x0c:
-                        self.moveLog[-1].extend(chr(fullMove["from"] % 8 + 97))
-                    self.moveLog[-1].extend("x")
-                # TODO
-                if 0: # TODO if similar piece can move to same square
-                    if 0: # TODO if pieces are on same rank (row)
-                        self.moveLog[-1].extend(chr(fullMove["from"] % 8 + 97))
-                    if 0: # TODO if pieces are on same file (col)
-                        self.moveLog[-1].extend(chr(56 - fullMove["from"] / 8))
-                self.moveLog[-1].extend(chr(fullMove["to"] % 8 + 97))
-                self.moveLog[-1].extend(chr(56 - fullMove["to"] / 8))
+                self.writeMoveLog()
                 
-                self.pieces[fullMove["to"]] = fullMove["victor"] # victor reconquers again
+                self.pieces[fullMove["to"]] = fullMove["victor"] # victor reconquers
                 self.pieces[fullMove["from"]] = "\x00"           # victor leaves old square empty
                 
                 self.moveNum += 1
@@ -395,8 +448,9 @@ class board:
             elif keys[0] == 127 or keys[3] == 27 and keys[2] == 91 and keys[1] == 51 and keys[0] == 126: # '[Backspace]' or '[Del]'
                 self.selected = None
             elif keys[0] == 3: # 'ctrl+c' (resign)  # "after pawn e4, black resigned!" :D
-                if raw_input("\x1b[13;0Hresign? [Y/n]") in ("y", ""):
+                if raw_input("\x1b[13;0Hresign? [Y/n]") in ("y", "Y", ""):
                     exit(0)
+                repaint = True
             elif keys[0] == 4: # 'ctrl+d' (exit)
                 stdout.write("\x1b[m\x1b[?25h")
                 break
@@ -406,70 +460,143 @@ class board:
                 pass
     
     
+    def writeMoveLog(self):
+        if self.moveNum % 2 == 0:
+            self.moveLog.append(bytearray())
+            self.moveLog[-1].extend("{}.".format(self.moveNum / 2 + 1))
+        self.moveLog[-1].extend(" ")
+        
+        # check for special moves
+        if specialMove == 1: # O-O
+            self.moveLog.write("O-O")
+            specialMove = 0
+            return
+        elif specialMove == 2: # O-O-O
+            self.moveLog.write("O-O-O")
+            specialMove = 0
+            return
+        elif specialMove == 4: # pawn promotion
+            # TODO
+            specialMove = 0
+            return
+        
+        if fullMove["victor"] % 6 != 0:
+            self.moveLog[-1].extend(self.pieceMap[fullMove["victor"]])
+        if fullMove["captured"] != 0:
+            if fullMove["victor"] % 6 == 0:
+                self.moveLog[-1].extend(chr(fullMove["from"] % 8 + 97))
+            self.moveLog[-1].extend("x")
+        # TODO
+        if 0: # TODO if similar piece can move to same square
+            if 0: # TODO if pieces are on same rank (row)
+                self.moveLog[-1].extend(chr(fullMove["from"] % 8 + 97))
+            if 0: # TODO if pieces are on same file (col)
+                self.moveLog[-1].extend(chr(56 - fullMove["from"] / 8))
+        self.moveLog[-1].extend(chr(fullMove["to"] % 8 + 97))
+        self.moveLog[-1].extend(chr(56 - fullMove["to"] / 8))
+    
+        if specialMove == 3: # en passent
+            self.moveLog.write(" ep")
+            specialMove = 0
+            return
+    
     def valMove(self):
         if self.pieces[self.selected] > 6:
-            if self.pieces[self.curpos] > 6:
-                return False
-            if not self.sloppyVal():
-                return False
+            return (self.pieces[self.curpos] + 5) / 6 != 2 and self.sloppyVal()
         elif self.pieces[self.selected] > 0:
-            if self.pieces[self.curpos] < 7 and self.pieces[self.curpos] != 0:
-                return False
-            if not self.sloppyVal():
-                return False
+            return (self.pieces[self.curpos] + 5) / 6 != 1 and self.sloppyVal()
         else:
             pass
-        return True
+        return not self.kingAttacked()
     
     
     def sloppyVal(self):
-        if self.pieces[self.selected] == 6 or self.pieces[self.selected] == 12:
-            if self.moveNum % 2 == 0:
-                if self.selected - self.curpos == 8 or self.selected - self.curpos == 16 and self.selected / 8 == 6:
+        if self.pieces[self.selected] == 1:
+            if not self.kingMoved[0]:
+                if self.curpos - self.selected == -2 and map(sum, (self.pieces[57:60],))[0] == 0 and not self.rookMoved[0]: # TODO check if king attacked on way over
+                    self.pieces[59] = 3
+                    self.pieces[56] = 0
+                    specialMove = 1
                     return True
-            else:
-                if self.selected - self.curpos == -8 or self.selected - self.curpos == -16 and self.selected / 8 == 1:
+                elif self.curpos - self.selected == 2 and self.pieces[61] + self.pieces[62] == 0 and not self.rookMoved[1]:
+                    self.pieces[61] = 3
+                    self.pieces[63] = 0
+                    specialMove = 2
                     return True
-            return False
+        elif self.pieces[self.selected] == 7:
+            if not self.kingMoved[1]:
+                if self.curpos - self.selected == -2 and map(sum, (self.pieces[1:4],))[0] == 0 and not self.rookMoved[2]:
+                    self.pieces[3] = 9
+                    self.pieces[0] = 0
+                    specialMove = 1
+                    return True
+                elif self.curpos - self.selected == 2 and self.pieces[5] + self.pieces[6] == 0 and not self.rookMoved[3]:
+                    self.pieces[5] = 9
+                    self.pieces[7] = 0
+                    specialMove = 2
+                    return True
+            if not self.kingMoved[0] and (self.curpos - self.selected == -2 or self.curpos - self.selected == 2):
+                return True
+        elif self.pieces[self.selected] == 6:
+            if self.curpos - self.selected == -16 and self.pieces[self.selected - 6] == 0 and self.pieces[self.curpos] == 0:
+                return True
+            elif self.curpos / 8 - self.selected / 8 == -1:
+                if self.pieces[self.curpos] == 0:
+                    if self.curpos - self.selected == -8:
+                        return True
+                    else:
+                        return False
+                elif self.curpos - self.selected == -9 or self.curpos - self.selected == -7:
+                    return True
+                else:
+                    return False
+        elif self.pieces[self.selected] == 12:
+            if self.curpos - self.selected == 16 and self.pieces[self.selected + 6] == 0 and self.pieces[self.curpos] == 0:
+                return True
+            elif self.curpos / 8 - self.selected / 8 == 1:
+                if self.pieces[self.curpos] == 0:
+                    if self.curpos - self.selected == 8:
+                        return True
+                    else:
+                        return False
+                elif self.curpos - self.selected == 9 or self.curpos - self.selected == 7:
+                    return True
+                else:
+                    return False
+        return self.validMoves[112 + (self.curpos % 8 - self.selected % 8) + (self.curpos / 8 - self.selected / 8) * 15] in self.pieceGroups[self.pieces[self.selected] % 6]
         
-        return self.curpos - self.selected in self.sloppyValMove[self.pieces[self.selected] % 6]
     
     
-    def kingAttcked(self): # TODO
-        if self.moveNum % 2 == 0: # don't need (neither king can be attacked)
-            return False
-        else:
-            return False
+    def kingAttacked(self): # TODO
+        return False
     
     
     def help(self):
-        for i, line in enumerate(bytearray("""
-\x1b[34;1mKEYS\x1b[m      | \x1b[35;1mDESCRIPTION\x1b[m| FUNCIONALITY                  \x1b[3{0}m♔\x1b[m
-\x1b[34;1m~~~~~~~~~~\x1b[m+\x1b[35;1m~~~~~~~~~~~~\x1b[m+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \x1b[3{0}m♕\x1b[m
-\x1b[34;1marrow keys\x1b[m| \x1b[35;1mmove cursor\x1b[m| left/h, down/j, up/k, right/l \x1b[3{0}m♖\x1b[m
-\x1b[34;1mvim arrows\x1b[m|            | wraps around to beg/end       \x1b[3{0}m♗\x1b[m
-          |            |                               \x1b[3{0}m♘\x1b[m
-\x1b[34;1menter\x1b[m     | \x1b[35;1mselect or\x1b[m  | select piece under cursor; if \x1b[3{0}m♙\x1b[m
-\x1b[34;1mspace\x1b[m     | \x1b[35;1mdeselect\x1b[m   | already selected, deselected  \x1b[3{1}m♚\x1b[m
-          |            |                               \x1b[3{1}m♛\x1b[m
-\x1b[34;1mctrl+z\x1b[m    | \x1b[35;1mundo\x1b[m       | undo against computer         \x1b[3{1}m♜\x1b[m
-          |            |                               \x1b[3{1}m♝\x1b[m
-\x1b[34;1mctrl+y\x1b[m    | \x1b[35;1mredo\x1b[m       | redo a move after you undo    \x1b[3{1}m♞\x1b[m
-          |            |                               \x1b[3{1}m♟\x1b[m
-\x1b[34;1mctrl+r\x1b[m    | \x1b[35;1mrepaint\x1b[m    | repaint screen*               \x1b[3{0}m♔\x1b[m
-          |            |                               \x1b[3{0}m♕\x1b[m
-\x1b[34;1mdelete\x1b[m    | \x1b[35;1mdeselect\x1b[m   | deselect a piece from         \x1b[3{0}m♖\x1b[m
-\x1b[34;1mbackspace\x1b[m |            | anywhere                      \x1b[3{0}m♗\x1b[m
-          |            |                               \x1b[3{0}m♘\x1b[m
-\x1b[34;1mctrl+c\x1b[m    | \x1b[35;1mresign\x1b[m     | give up?                      \x1b[3{0}m♙\x1b[m
-          |            |                               \x1b[3{1}m♚\x1b[m
-\x1b[34;1mctrl+d\x1b[m    | \x1b[35;1mexit\x1b[m       | exit cleanly when your done   \x1b[3{1}m♛\x1b[m
-\x1b[34;1m~~~~~~~~~~\x1b[m+\x1b[35;1m~~~~~~~~~~~~\x1b[m+~~~~~~~~~~~~~~~~~~~~~~~~~~~~   \x1b[3{1}m♜\x1b[m
-*ctrl+shft+'+' (sometimes ctrl+'+') or ctrl+'-'        \x1b[3{1}m♝\x1b[m
- enlarges or shrinks (respectively) the screen. This   \x1b[3{1}m♞\x1b[m
- can mess up the screen, so repaint cleans it up.      \x1b[3{1}m♟\x1b[m
- repainting every time causes flickering, so it's up   \x1b[3{0}m♔\x1b[m
- to you! Screen also repainted with Enter, undo, redo. \x1b[3{0}m♕\x1b[m\
+        for i, line in enumerate(bytearray("""\
+\x1b[34;1mKEYS       \x1b[m|\x1b[35;1m DESCRIPTION                  \x1b[3{0}m♔
+\x1b[34;1m~~~~~~~~~~~\x1b[m+\x1b[35;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \x1b[3{0}m♕
+\x1b[34;1marrow keys \x1b[m|\x1b[35;1m move cursor (normal or vim   \x1b[3{0}m♖
+\x1b[34;1mvim arrows \x1b[m|\x1b[35;1m functionality)               \x1b[3{0}m♗
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{0}m♘
+\x1b[34;1menter      \x1b[m|\x1b[35;1m select (first press) or      \x1b[3{0}m♙
+\x1b[34;1mspace      \x1b[m|\x1b[35;1m deselect (same square)       \x1b[3{1}m♚
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♛
+\x1b[34;1mctrl+z     \x1b[m|\x1b[35;1m undo (computer or self)      \x1b[3{1}m♜
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♝
+\x1b[34;1mctrl+y     \x1b[m|\x1b[35;1m redo if you undo             \x1b[3{1}m♞
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♟
+\x1b[34;1mctrl+r     \x1b[m|\x1b[35;1m repaint (clear this mssg)    \x1b[3{0}m♔
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{0}m♕
+\x1b[34;1mdelete     \x1b[m|\x1b[35;1m deselect regaurdless of      \x1b[3{0}m♖
+\x1b[34;1mbackspace  \x1b[m|\x1b[35;1m cursor location              \x1b[3{0}m♗
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{0}m♘
+\x1b[34;1mctrl+c     \x1b[m|\x1b[35;1m resign                       \x1b[3{0}m♙
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♚
+\x1b[34;1mctrl+d     \x1b[m|\x1b[35;1m save and exit                \x1b[3{1}m♛
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♜
+\x1b[34;1mctrl+shft++\x1b[m|\x1b[35;1m enlarge text                 \x1b[3{1}m♝
+\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♞
+\x1b[34;1mctrl+-     \x1b[m|\x1b[35;1m shrink text                  \x1b[3{1}m♟\x1b[m\
 """.format(self.c1, self.c2)).split("\n")):
             stdout.write("\x1b[{};38H{}".format(i, line))
     
