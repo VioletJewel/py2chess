@@ -1,11 +1,55 @@
-╔═════════════════╗
-║ R|N|B|Q|K|B|N|R ║
-║ P|P|P|P|P|P|P|P ║ 
-║  | | | | | | |  ║
-║  | | | | | | |  ║
-║  | | | | | | |  ║
-║  | | | | | | |  ║
-║ P|P|P|P|P|P|P|P ║
-║ R|N|B|Q|K|B|N|R ║
-╚═════════════════╝
+THE BOARD AT STARTUP
 
+   ? = help
+   ╔═════════════════╗
+8  ║ R|N|B|Q|K|B|N|R ║
+7  ║ P|P|P|P|P|P|P|P ║
+6  ║  | | | | | | |  ║
+5  ║  | | | | | | |  ║
+4  ║  | | | | | | |  ║
+3  ║  | | | | | | |  ║
+2  ║ P|P|P|P|P|P|P|P ║
+1  ║ R|N|B|Q|K|B|N|R ║
+   ╚═════════════════╝
+    |a|b|c|d|e|f|g|h|
+
+
+THE BOARD AFTER GAMBIT
+
+   ? = help
+   ╔═════════════════╗ 1. d4 d5
+8  ║ R|N| | |K|B| |R ║ 2. Nc3 Nf6
+7  ║ P|P|N| |P|P|P|P ║ 3. e4 dxe4
+6  ║  | | | | |N| |  ║ 4. f3 exf3
+5  ║  | | | | | | |  ║ 5. Qxf3 Qxd4
+4  ║  |Q| | | | | |  ║ 6. Be3 Qb4
+3  ║  | | | |B|B| |  ║ 7. O-O Bg4
+2  ║ P|P|P| | | |P|P ║ 8. Nb5 Bxf3
+1  ║  | |K|R| |B|N|R ║ 9. Nxc7
+   ╚═════════════════╝
+    |a|b|c|d|e|f|g|h|
+
+
+THE BOARD WITH HELP MENU
+
+   ? = help                          KEYS       | DESCRIPTION                ♚
+   ╔═════════════════╗ 1. d4 d5      ~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~ ♛
+8  ║ R|N| | |K|B| |R ║ 2. Nc3 Nf6    arrow keys | move cursor (normal or vim ♜
+7  ║ P|P|N| |P|P|P|P ║ 3. e4 dxe4    vim arrows | functionality)             ♝
+6  ║  | | | | |N| |  ║ 4. f3 exf3               |                            ♞
+5  ║  | | | | | | |  ║ 5. Qxf3 Qxd4  enter      | select (first press) or    ♟
+4  ║  |Q| | | | | |  ║ 6. Be3 Qb4    space      | deselect (same square)     ♚
+3  ║  | | | |B|B| |  ║ 7. O-O Bg4               |                            ♛
+2  ║ P|P|P| | | |P|P ║ 8. Nb5 Bxf3   ctrl+z     | undo (computer or self)    ♜
+1  ║  | |K|R| |B|N|R ║ 9. Nxc7       ctrl+y     | redo if you undo           ♝
+   ╚═════════════════╝                          |                            ♞
+    |a|b|c|d|e|f|g|h|                ctrl+r     | repaint (clear this mssg)  ♟
+                                                |                            ♚
+                                     delete     | deselect regaurdless of    ♛
+                                     backspace  | cursor location            ♜
+                                                |                            ♝
+                                     ctrl+c     | resign                     ♞
+                                     ctrl+d     | save and exit              ♛
+                                                |                            ♜
+                                     ctrl+shft++| enlarge text               ♟
+                                     ctrl+-     | shrink text                ♚

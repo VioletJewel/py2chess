@@ -348,35 +348,20 @@ class board:
                 else: # second enter
                     if not self.valMove():
                         continue
-                    if self.moveNum % 2 == 0: # white (new row)
-                        self.moveLog.append(bytearray())
-                        self.moveLog[-1].extend("{}.".format(self.moveNum / 2 + 1))
-                    self.moveLog[-1].extend(" ")
                     
-                    if self.pieces[self.selected] != 6 and self.pieces[self.selected] != 12:
-                        self.moveLog[-1].extend(self.pieceMap[self.pieces[self.selected]])
-                    if self.pieces[self.curpos] != 0:
-                        if self.pieces[self.selected] == 6 or self.pieces[self.selected] == 12:
-                            self.moveLog[-1].extend(chr(self.selected % 8 + 97))
-                        self.moveLog[-1].extend("x")
-                    # TODO
-                    if 0: # TODO if similar piece can move to same square
-                        if 0: # TODO if pieces are on same rank (row)
-                            self.moveLog[-1].extend(chr(self.selected % 8 + 97))
-                        if 0: # TODO if pieces are on same file (col)
-                            self.moveLog[-1].extend(chr(56 - self.selected / 8))
                     
-                    self.moveLog[-1].extend(chr(self.curpos % 8 + 97))
-                    self.moveLog[-1].extend(chr(56 - self.curpos / 8))
-                    
-                    self.fullMoves.append({"from":self.selected,
-                                           "to":self.curpos,
-                                           "captured":self.pieces[self.curpos],
-                                           "victor":self.pieces[self.selected],
-                                           "flag":self.specialMove})
+                    self.fullMove = {"from":self.selected,
+                                       "to":self.curpos,
+                                       "captured":self.pieces[self.curpos],
+                                       "victor":self.pieces[self.selected],
+                                       "flag":self.specialMove}
+                   
+                    self.fullMoves.append(self.fullMove)
                     
                     if len(self.fullMoves) > self.moveNum:
                         self.fullMoves = self.fullMoves[:self.moveNum + 1]
+                    
+                    self.writeMoveLog()
                     
                     self.pieces[self.curpos] = self.pieces[self.selected]   # replace the current position with previously self.selected location
                     self.pieces[self.selected] = "\x00"                     # replace the previously self.selected location with blank
@@ -418,7 +403,7 @@ class board:
                 
                 # TODO properly implement all flags
                 if self.fullMove["flag"] == 1:
-                    if self.moveNum % 2 == 0:
+                    if self.moveNum % 2 == 0: # O-O
                         self.pieces[56] = 3
                         self.pieces[59] = 0
                         #self.pieces[60] = 1
@@ -426,7 +411,7 @@ class board:
                         self.pieces[0] = 9
                         self.pieces[3] = 0
                         #self.pieces[4] = 7
-                elif self.fullMove["flag"] == 2:
+                elif self.fullMove["flag"] == 2: # O-O-O
                     if self.moveNum % 2 == 0:
                         self.pieces[63] = 3
                         self.pieces[61] = 0
@@ -435,6 +420,10 @@ class board:
                         self.pieces[7] = 9
                         self.pieces[5] = 0
                         #self.pieces[4] = 7
+                elif self.fullMove["flag"] == 3: # en passant
+                    pass
+                elif self.fullMove["flag"] == 4: # promotion
+                    pass
                 
                 
                 #self.fullMoves = self.fullMoves[:self.moveNum]
@@ -450,6 +439,9 @@ class board:
                 self.selected = self.fullMove["from"]
                 self.curpos = self.fullMove["to"]
                 
+                self.fullMove = self.fullMoves[self.moveNum]
+                self.specialMove = self.fullMove["flag"]
+                
                 self.writeMoveLog()
                 
                 self.pieces[self.selected] = "\x00"
@@ -457,6 +449,30 @@ class board:
                 
                 self.pieces[self.fullMove["to"]] = self.fullMove["victor"] # victor reconquers
                 self.pieces[self.fullMove["from"]] = "\x00"                # victor leaves old square empty
+                
+                # TODO properly implement all flags
+                if self.fullMove["flag"] == 1:
+                    if self.moveNum % 2 == 0: # O-O-O
+                        self.pieces[56] = 0
+                        self.pieces[59] = 3
+                        #self.pieces[60] = 1
+                    else:
+                        self.pieces[0] = 0
+                        self.pieces[3] = 9
+                        #self.pieces[4] = 7
+                elif self.fullMove["flag"] == 2: # O-O
+                    if self.moveNum % 2 == 0:
+                        self.pieces[63] = 0
+                        self.pieces[61] = 3
+                        #self.pieces[60] = 1
+                    else:
+                        self.pieces[7] = 0
+                        self.pieces[5] = 9
+                        #self.pieces[4] = 7
+                elif self.fullMove["flag"] == 3: # en passant
+                    pass
+                elif self.fullMove["flag"] == 4: # promotion
+                    pass
                 
                 self.moveNum += 1
                 
@@ -488,11 +504,11 @@ class board:
         
         # check for special moves
         if self.specialMove == 1: # O-O
-            self.moveLog[-1].write("O-O")
+            self.moveLog[-1].extend("O-O-O")
             self.specialMove = 0
             return
         elif self.specialMove == 2: # O-O-O
-            self.moveLog[-1].write("O-O-O")
+            self.moveLog[-1].extend("O-O")
             self.specialMove = 0
             return
         elif self.specialMove == 4: # pawn promotion
@@ -516,7 +532,7 @@ class board:
         self.moveLog[-1].extend(chr(56 - self.fullMove["to"] / 8))
     
         if self.specialMove == 3: # en passant
-            self.moveLog.write(" ep")
+            self.moveLog[-1].extend(" ep")
             self.specialMove = 0
             return
     
