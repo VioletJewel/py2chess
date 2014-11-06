@@ -8,9 +8,10 @@ This has wonderul color control - YOU can pick ANY color for your pieces and pla
 Seriously! Try it out for yourself if you are on Unix. Unfortunately Windows is not very good about displaying color in the terminal.
 
 Funtionalities (keys) currently implemented:
-  * "?": help menu * beautiful and condensed.
-                   * prints to the right of the board if screen is large enough
-                   * if screen is too small, it occupies the whole screen and waits for any key
+  * "?": help menu
+    - beautiful and condensed.
+    - prints to the right of the board if screen is large enough
+    - if screen is too small, it occupies the whole screen and waits for any key
                  
   * arrows: move cursor around screen with arrow keys
   * "hjkl": move cursor around screen with vim-style keys
