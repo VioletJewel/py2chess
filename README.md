@@ -8,20 +8,20 @@ This has wonderul color control - YOU can pick ANY color for your pieces and pla
 Seriously! Try it out for yourself if you are on Unix. Unfortunately Windows is not very good about displaying color in the terminal.
 
 Funtionalities (keys) currently implemented:
-  "?": help menu - beautiful and condensed.
-                 - prints to the right of the board if screen is large enough
-                 - if screen is too small, it occupies the whole screen and waits for any key
+  * "?": help menu * beautiful and condensed.
+                   * prints to the right of the board if screen is large enough
+                   * if screen is too small, it occupies the whole screen and waits for any key
                  
-  arrows: move cursor around screen with arrow keys
-  "hjkl": move cursor around screen with vim-style keys
+  * arrows: move cursor around screen with arrow keys
+  * "hjkl": move cursor around screen with vim-style keys
   
-  [Enter]: (1) select piece (2) deslect same piece (if same square) or try to move to new square
-  [space]: (1) select piece (2) deslect same piece (if same square) or try to move to new square
+  * [Enter]: (1) select piece (2) deslect same piece (if same square) or try to move to new square
+  * [space]: (1) select piece (2) deslect same piece (if same square) or try to move to new square
   
-  "ctrl+z": undo as many moves as you want (this will change when playing other people... future, though)
-  "ctrl+y": redo as many moves as you want (this will change when playing other people... future, though)
+  * "ctrl+z": undo as many moves as you want (this will change when playing other people... future, though)
+  * "ctrl+y": redo as many moves as you want (this will change when playing other people... future, though)
   
-  "ctrl+r": repaint the screen - if you press ctrl+shft++ or ctrl+-, you can mess up the screen by changing
+  * "ctrl+r": repaint the screen - if you press ctrl+shft++ or ctrl+-, you can mess up the screen by changing
                                  the font size; to counteract this, every time [Enter] is pressed (the second
                                  time) and it is a valid move or undo/redo controls are used, the screen is
                                  repainted,
