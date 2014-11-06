@@ -1,11 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = "Violet"
-
+__author__  = "Violet"
 
 # IMPORTS
-from os import system as term
+from os import popen, system as term
 from os.path import expanduser as expu, isdir, isfile
 from random import random
 from struct import pack, unpack
@@ -297,6 +296,7 @@ class board:
         
         stdout.write("\x1b[?25l")
         while True:
+            
             if repaint:
                 repaint = False
                 stdout.write("\x1b[0;0H\x1b[J")
@@ -304,7 +304,7 @@ class board:
             
             #print "\x1b[2Kkeys:", list(keys)
             for i, l in enumerate(self.moveLog[-10:]):
-                stdout.write("\x1b[{};22H{}    ".format(i + 2, l))
+                stdout.write("\x1b[{};24H{}".format(i + 2, l))
             #print "\x1b[2Kpieces removed:", removed
             
             # wait for user input
@@ -375,6 +375,9 @@ class board:
                                            "victor":self.pieces[self.selected],
                                            "flag":self.specialMove})
                     
+                    if len(self.fullMoves) > self.moveNum:
+                        self.fullMoves = self.fullMoves[:self.moveNum + 1]
+                    
                     self.pieces[self.curpos] = self.pieces[self.selected]   # replace the current position with previously self.selected location
                     self.pieces[self.selected] = "\x00"                     # replace the previously self.selected location with blank
                     self.selected = None                                    # reset self.selected to None because nothing is self.selected
@@ -413,18 +416,25 @@ class board:
                 self.pieces[self.fullMove["from"]] = self.fullMove["victor"] # victor goes back whence he came
                 self.pieces[self.fullMove["to"]] = self.fullMove["captured"] # the captured piece is restored
                 
-                # TODO check for all flags
-                # TODO properly implement castling flag (not working)
+                # TODO properly implement all flags
                 if self.fullMove["flag"] == 1:
                     if self.moveNum % 2 == 0:
-                        self.pieces[63] = 3
-                    else:
-                        self.pieces[7] = 9
-                elif self.fullMove["flag"] == 2:
-                    if self.moveNum % 2 == 0:
                         self.pieces[56] = 3
+                        self.pieces[59] = 0
+                        #self.pieces[60] = 1
                     else:
                         self.pieces[0] = 9
+                        self.pieces[3] = 0
+                        #self.pieces[4] = 7
+                elif self.fullMove["flag"] == 2:
+                    if self.moveNum % 2 == 0:
+                        self.pieces[63] = 3
+                        self.pieces[61] = 0
+                        #self.pieces[60] = 1
+                    else:
+                        self.pieces[7] = 9
+                        self.pieces[5] = 0
+                        #self.pieces[4] = 7
                 
                 
                 #self.fullMoves = self.fullMoves[:self.moveNum]
@@ -446,7 +456,7 @@ class board:
                 self.pieces[self.curpos] = self.fullMove["victor"]
                 
                 self.pieces[self.fullMove["to"]] = self.fullMove["victor"] # victor reconquers
-                self.pieces[self.fullMove["from"]] = "\x00"           # victor leaves old square empty
+                self.pieces[self.fullMove["from"]] = "\x00"                # victor leaves old square empty
                 
                 self.moveNum += 1
                 
@@ -465,7 +475,7 @@ class board:
                 stdout.write("\x1b[m\x1b[?25h")
                 break
             elif keys[0] == 63:
-                self.help()
+                repaint = not self.help()
             else:
                 pass
     
@@ -478,11 +488,11 @@ class board:
         
         # check for special moves
         if self.specialMove == 1: # O-O
-            self.moveLog.write("O-O")
+            self.moveLog[-1].write("O-O")
             self.specialMove = 0
             return
         elif self.specialMove == 2: # O-O-O
-            self.moveLog.write("O-O-O")
+            self.moveLog[-1].write("O-O-O")
             self.specialMove = 0
             return
         elif self.specialMove == 4: # pawn promotion
@@ -582,43 +592,53 @@ class board:
     
     
     def help(self):
-        for i, line in enumerate(bytearray("""\
-\x1b[34;1mKEYS       \x1b[m|\x1b[35;1m DESCRIPTION                  \x1b[3{0}m♔
-\x1b[34;1m~~~~~~~~~~~\x1b[m+\x1b[35;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \x1b[3{0}m♕
-\x1b[34;1marrow keys \x1b[m|\x1b[35;1m move cursor (normal or vim   \x1b[3{0}m♖
-\x1b[34;1mvim arrows \x1b[m|\x1b[35;1m functionality)               \x1b[3{0}m♗
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{0}m♘
-\x1b[34;1menter      \x1b[m|\x1b[35;1m select (first press) or      \x1b[3{0}m♙
-\x1b[34;1mspace      \x1b[m|\x1b[35;1m deselect (same square)       \x1b[3{1}m♚
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♛
-\x1b[34;1mctrl+z     \x1b[m|\x1b[35;1m undo (computer or self)      \x1b[3{1}m♜
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♝
-\x1b[34;1mctrl+y     \x1b[m|\x1b[35;1m redo if you undo             \x1b[3{1}m♞
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♟
-\x1b[34;1mctrl+r     \x1b[m|\x1b[35;1m repaint (clear this mssg)    \x1b[3{0}m♔
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{0}m♕
-\x1b[34;1mdelete     \x1b[m|\x1b[35;1m deselect regaurdless of      \x1b[3{0}m♖
-\x1b[34;1mbackspace  \x1b[m|\x1b[35;1m cursor location              \x1b[3{0}m♗
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{0}m♘
-\x1b[34;1mctrl+c     \x1b[m|\x1b[35;1m resign                       \x1b[3{0}m♙
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♚
-\x1b[34;1mctrl+d     \x1b[m|\x1b[35;1m save and exit                \x1b[3{1}m♛
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♜
-\x1b[34;1mctrl+shft++\x1b[m|\x1b[35;1m enlarge text                 \x1b[3{1}m♝
-\x1b[34;1m           \x1b[m|\x1b[35;1m                              \x1b[3{1}m♞
-\x1b[34;1mctrl+-     \x1b[m|\x1b[35;1m shrink text                  \x1b[3{1}m♟\x1b[m\
+        rows, cols = popen('stty size', 'r').read().split()
+        if int(rows) < 22 or int(cols) < 79:
+            stdout.write("\x1b[0;0H\x1b[J")
+            x = 0
+        else:
+            x = 38
+        for y, line in enumerate(bytearray("""
+\x1b[34;1mKEYS       \x1b[m|\x1b[35;1m DESCRIPTION                \x1b[3{0}m♚
+\x1b[34;1m~~~~~~~~~~~\x1b[m+\x1b[35;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~ \x1b[3{0}m♛
+\x1b[34;1marrow keys \x1b[m|\x1b[35;1m move cursor (normal or vim \x1b[3{0}m♜
+\x1b[34;1mvim arrows \x1b[m|\x1b[35;1m functionality)             \x1b[3{0}m♝
+\x1b[34;1m           \x1b[m|\x1b[35;1m                            \x1b[3{0}m♞
+\x1b[34;1menter      \x1b[m|\x1b[35;1m select (first press) or    \x1b[3{0}m♟
+\x1b[34;1mspace      \x1b[m|\x1b[35;1m deselect (same square)     \x1b[3{1}m♚
+\x1b[34;1m           \x1b[m|\x1b[35;1m                            \x1b[3{1}m♛
+\x1b[34;1mctrl\x1b[37;2m+\x1b[34;1mz     \x1b[m|\x1b[35;1m undo (computer or self)    \x1b[3{1}m♜
+\x1b[34;1mctrl\x1b[37;2m+\x1b[34;1my     \x1b[m|\x1b[35;1m redo if you undo           \x1b[3{1}m♝
+\x1b[34;1m           \x1b[m|\x1b[35;1m                            \x1b[3{1}m♞
+\x1b[34;1mctrl\x1b[37;2m+\x1b[34;1mr     \x1b[m|\x1b[35;1m repaint (clear this mssg)  \x1b[3{1}m♟
+\x1b[34;1m           \x1b[m|\x1b[35;1m                            \x1b[3{0}m♚
+\x1b[34;1mdelete     \x1b[m|\x1b[35;1m deselect regaurdless of    \x1b[3{0}m♛
+\x1b[34;1mbackspace  \x1b[m|\x1b[35;1m cursor location            \x1b[3{0}m♜
+\x1b[34;1m           \x1b[m|\x1b[35;1m                            \x1b[3{0}m♝
+\x1b[34;1mctrl\x1b[37;2m+\x1b[34;1mc     \x1b[m|\x1b[35;1m resign                     \x1b[3{0}m♞
+\x1b[34;1mctrl\x1b[37;2m+\x1b[34;1md     \x1b[m|\x1b[35;1m save and exit              \x1b[3{1}m♛
+\x1b[34;1m           \x1b[m|\x1b[35;1m                            \x1b[3{1}m♜
+\x1b[34;1mctrl\x1b[37;2m+\x1b[34;1mshft\x1b[37;2m+\x1b[34;1m+\x1b[m|\x1b[35;1m enlarge text               \x1b[3{1}m♟
+\x1b[34;1mctrl\x1b[37;2m+\x1b[34;1m-     \x1b[m|\x1b[35;1m shrink text                \x1b[3{1}m♚\x1b[m\
 """.format(self.c1, self.c2)).split("\n")):
-            stdout.write("\x1b[{};38H{}".format(i, line))
+            stdout.write("\x1b[{};{}H{}".format(y, x, line))
+        if x == 0:
+            # wait for user input
+            setraw(self.fd)
+            stdin.read(1)
+            setat(self.fd, TCSADRAIN, self.old_settings)
+            return False
+        return True
     
     
     def getGraphicalChars(self):
         """
         
         """
-        gr = bytearray("\x1b[0;0H\x1b[4{}m\x1b[0;4H? = help\n".format(self.bg)) # graphical representation of pieces
+        gr = bytearray("\x1b[0;0H\x1b[4{0}m\x1b[0;4H? = help\x1b[m\n   \x1b[4{0}m╔═════════════════╗".format(self.bg)) # graphical representation of pieces
         for i, piece in enumerate(unpack(">64B", self.pieces)):
             if i % 8 == 0: # x == 0
-                gr.extend("\n{}{}\x1b[27m \x1b[m \x1b[4{}m|".format("\x1b[7m" if int(i / 8.0) == int(self.curpos / 8.0) else "", 8 - int(i / 8.0), self.bg))
+                gr.extend("\n{}{}\x1b[27m \x1b[m \x1b[4{}m║ ".format("\x1b[7m" if int(i / 8.0) == int(self.curpos / 8.0) else "", 8 - int(i / 8.0), self.bg))
             if piece > 6: # p2 (black in conv. chess)
                 gr.extend("\x1b[21;22;3{}m".format(self.c2))
             elif piece > 0: # p1 (white in conv. chess)
@@ -627,8 +647,8 @@ class board:
                 gr.extend("\x1b[7m")
             if i == self.selected:
                 gr.extend("\x1b[4m")
-            gr.extend("{}\x1b[0;4{}m|".format(self.pieceMap[piece], self.bg))
-        gr.extend("\n\n\x1b[0m   \x1b[4{}m|".format(self.bg))
+            gr.extend("{}\x1b[0;4{}m{}".format(self.pieceMap[piece], self.bg, " ║" if i % 8 == 7 else "|"))
+        gr.extend("\n\x1b[m   \x1b[4{0}m╚═════════════════╝\n\x1b[0m    \x1b[4{0}m|".format(self.bg))
         for i in range(97, 105):
             gr.extend("{}{}\x1b[27m|".format("\x1b[7m" if int((i - 1) % 8.0) == int(self.curpos % 8.0) else "", chr(i)))
         gr.extend("\x1b[m")
