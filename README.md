@@ -37,4 +37,4 @@ Functionalities (programatically) currently implemented:
 
 Please note that this chess program - in its current state - is not functioning as it should: there are a few bugs and all of the functionality is not there. However, every day I am working on it in my spare time and it has started from absolutely nothing just a couple weeks ago. If you want to contribute or take a look at the code, please do so.
 
-This is just 12 commits (not 13) in 7 days! That's prettay good in my book. Two people could viably play chess now - they wouldn't be able to (1) undo after a castle without a crash, (2) use en passant and white would be able to take his/her opponent's queen on the first move and then a rook on the second... but it works (mostly).
+This is just 12 commits (now 18 because of all of these readme commits) in 7 days! That's prettay good in my book. Two people could viably play chess now - they wouldn't be able to (1) undo after a castle without a crash, (2) use en passant and white would be able to take his/her opponent's queen on the first move and then a rook on the second... but it works (mostly).
