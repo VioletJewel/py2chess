@@ -436,9 +436,9 @@ class board():
     
     def valMove(self):
         if self.pieces[self.selected] > 6:
-            return (self.pieces[self.curpos] + 5) / 6 != 2 and self.sloppyVal()
+            return (self.pieces[self.curpos] + 5) / 6 != 2 and self.sloppyVal() and not (self.pieceBetween() or self.kingAttacked())
         elif self.pieces[self.selected] > 0:
-            return (self.pieces[self.curpos] + 5) / 6 != 1 and self.sloppyVal()
+            return (self.pieces[self.curpos] + 5) / 6 != 1 and self.sloppyVal() and not (self.pieceBetween() or self.kingAttacked())
         else:
             pass
         return not (self.pieceBetween() or self.kingAttacked())
@@ -516,31 +516,45 @@ class board():
         dy = self.curpos / 8 - self.selected / 8 # delta y
         
         if dx == 0 and dy == 0: # impossible for now (taken care of elsewhere)
-            return False
-        elif abs(dx) != abs(dy):
             return True
         elif dy == 0:
-            # dx represents x position now ==> conserves memory
-            for dx in xrange(self.selected % 8, self.curpos % 8):
+            # dx represents +/- 1 for moveing piece right or left ==> conserves memory
+            dx = 1 if self.curpos > self.selected else -1
+            # dx represents position now ==> conserves memory
+            for dx in xrange(self.selected + dx, self.curpos, dx):
                 if self.pieces[self.selected + dx] != 0:
-                    return False
-            return True
+                    return True
+            return False
         
         elif dx == 0:
-            # dy represents y position now ==> conserves memory
-            for dy in xrange(self.selected / 8, self.curpos / 8):
-                if self.pieces[self.selected + dy * 8] != 0:
-                    return False
-            return True
+            # dy represents +/- 8 for moving piece down/up ==> conserves memory
+            dy = 8 if self.curpos > self.selected else - 8
+            # dy represents position now ==> conserves memory
+            for dy in xrange(self.selected + dy, self.curpos, dy):
+                if self.pieces[dy] != 0:
+                    return True
+            return False
+        
+        elif abs(dx) != abs(dy): # most likely a knight ==> otherwise, another filter should (and does) catch this
+            return False
         
         elif abs(dx) == abs(dy):
-            # dx and dy represent x and y positions now (resp.)
-            for dx,dy in zip(xrange(self.selected % 8, self.curpos % 8), xrange(self.selected / 8, self.curpos / 8)):
-                if self.pieces[self.selected + dx + dy * 8] != 0:
-                    return False
-            return True
+            # dx represents +/- 7/9 for moving piece along diags ==> conserves memory (if piece wraps around to other side, another filter should - and does - catch this
+            if dx < 0 and dy < 0:
+                dx = -9
+            elif dx > 0 and dy < 0:
+                dx = -7
+            elif dx < 0 and dy > 0:
+                dx = 7
+            else:
+                dx = 9
+            # dx represents x position now ==> conserves memory
+            for dx in xrange(self.selected + dx, self.curpos, dx):
+                if self.pieces[dx] != 0:
+                    return True
+            return False
         else:
-            return True
+            return False
     
     
     def writeMoveLog(self):
@@ -593,7 +607,7 @@ class board():
 \x1b[34;1marrow keys \x1b[m|\x1b[35;1m move cursor (normal or vim \x1b[3{0}m♜
 \x1b[34;1mvim arrows \x1b[m|\x1b[35;1m functionality)             \x1b[3{0}m♝
 \x1b[34;1m           \x1b[m|\x1b[35;1m                            \x1b[3{0}m♞
-\x1b[34;1menter      \x1b[m|\x1b[35;1m select (first press) or    \x1b[3{0}m♟
+\x1b[34;1menter      \x1b[m|\x1b[35;1m select (1st/2nd press) or  \x1b[3{0}m♟
 \x1b[34;1mspace      \x1b[m|\x1b[35;1m deselect (same square)     \x1b[3{1}m♚
 \x1b[34;1m           \x1b[m|\x1b[35;1m                            \x1b[3{1}m♛
 \x1b[34;1mctrl\x1b[37;2m+\x1b[34;1mz     \x1b[m|\x1b[35;1m undo (computer or self)    \x1b[3{1}m♜
