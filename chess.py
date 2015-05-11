@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 __author__ = "Violet"
 
+# John is with me!
+
 # IMPORTS
 from os import popen, system as term
 from random import random
