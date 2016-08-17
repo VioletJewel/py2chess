@@ -27,7 +27,7 @@ class game():
         self.fd = stdin.fileno()
         self.old_settings = getat(self.fd)
         self.buffer = 4
-    
+
     def selectColor(self, desc = "", typ = "3", cInd = 7):
         rec = (typ, cInd)
         colorMap = dict()
@@ -45,7 +45,7 @@ class game():
             colorMap["dark {}".format(color)] = "{};2".format(i)
             colorMap[color] = "{}".format(i)
             colorMap["light {}".format(color)] = "{};1".format(i)
-        
+
         self.keys = bytearray([0, 0, 0, 0])
         ch = None
         if typ == "4":
@@ -54,7 +54,7 @@ class game():
             typ = "3"
             shade = 0
         print "\x1b[0;0H\x1b[J{}\n".format(desc)
-        
+
         # wait for [Enter]
         while ch != 13:
             if shade == 0:
@@ -77,15 +77,15 @@ class game():
                                             and rec[1] == cInd)
                                         else ""
                       )
-            
+
             # wait for user input
             setraw(self.fd)
             self.keys.insert(0,stdin.read(1))
             setat(self.fd, TCSADRAIN, self.old_settings)
             self.keys = self.keys[:self.buffer]
-            
+
             # use input
-            
+
             # 'h' or '[left]'
             if ( self.keys[0] == 104
                  or self.keys[2] == 27
@@ -96,7 +96,7 @@ class game():
                     shade -= 1
                 else:
                     shade = 2
-            
+
             # 'j' or '[down]'
             elif ( self.keys[0] == 106
                    or self.keys[2] == 27
@@ -107,7 +107,7 @@ class game():
                     cInd = 0
                 else:
                     cInd += 1
-            
+
             # 'k' or '[up]'
             elif ( self.keys[0] == 107
                    or self.keys[2] == 27
@@ -118,7 +118,7 @@ class game():
                     cInd = 7
                 else:
                     cInd -= 1
-            
+
             # 'l' or '[right]'
             elif ( self.keys[0] == 108
                    or self.keys[2] == 27
@@ -129,7 +129,7 @@ class game():
                     shade += 1
                 else:
                     shade = 0
-            
+
             # '[Enter]' or '[space]'
             elif self.keys[0] == 13 or self.keys[0] == 32:
                 c = "{}{}".format(
@@ -138,22 +138,22 @@ class game():
                           else ";2" if shade == 2
                                     else ""
                     )
-                
+
                 if shade == 0:
                     return "{};1".format(cInd)
-                
+
                 elif shade == 2:
                     return "{};2".format(cInd)
-                
+
                 else:
                     return str(cInd)
-                
+
             elif self.keys[0] == 3: # 'ctrl+c''
                 return 0
             elif self.keys[0] == 4: # 'ctrl+d'
                 exit(0)
-    
-    
+
+
     def menu(self):
         stdout.write("\x1bc")
         self.keys = bytearray([0, 0, 0, 0])
@@ -167,15 +167,15 @@ class game():
                                  else "",
                        options[i]
                       )
-            
+
             # wait for user input
             setraw(self.fd)
             self.keys.insert(0,stdin.read(1))
             setat(self.fd, TCSADRAIN, self.old_settings)
             self.keys = self.keys[:self.buffer]
-            
+
             # use input
-            
+
             # 'j' or '[down]'
             if ( self.keys[0] == 106
                  or self.keys[2] == 27
@@ -186,7 +186,7 @@ class game():
                     line = 0
                 else:
                     line += 1
-            
+
             # 'k' or '[up]'
             elif ( self.keys[0] == 107
                    or self.keys[2] == 27
@@ -197,7 +197,7 @@ class game():
                     line = len(options) - 1
                 else:
                     line -= 1
-            
+
             elif ( self.keys[0] == 3
                    or self.keys[0] == 4
             ): # 'ctrl+c' or 'ctrl+d'
@@ -206,7 +206,7 @@ class game():
             else:
                 pass
         return line
-    
+
     def newGame(self):
         try:
             bg = self.selectColor(
@@ -232,7 +232,7 @@ default (RECOMMENDED)\n\tctrl+d to exit", "3",
                  )
         except KeyboardInterrupt:
             c2 = None
-        
+
         b = board()
         stdout.write("\x1bc")
         if random() >= .5:
@@ -247,14 +247,14 @@ default (RECOMMENDED)\n\tctrl+d to exit", "3",
                  )
             except (KeyboardInterrupt, SystemExit): pass
             b.play(True, bg=bg, c1=c1, c2=c2)
-    
+
 
 class board():
     def __init__(self):
         self.fd = stdin.fileno()
         self.old_settings = getat(self.fd)
         self.buffer = 4
-        
+
         # all of the pieces 0: blank, 1-6: white, 7-12: black
         # (white: K=1 Q=2 R=3 B=4  N=5  P=6)
         # (black: k=7 Q=8 R=9 B=10 N=11 P=12)
@@ -266,7 +266,7 @@ class board():
                                   0, 0, 0, 0, 0, 0, 0, 0,
                                   6, 6, 6, 6, 6, 6, 6, 6,
                                   3, 5, 4, 2, 1, 4, 5, 3,])
-        
+
         # maps number to character
         # you can't just use char because you have to distinguish between colors
         self.pieceMap = {0:" ",
@@ -276,7 +276,7 @@ class board():
                          4:"B", 10:"B",
                          5:"N", 11:"N",
                          6:"P", 12:"P",}
-        
+
         # all of the normal valid moves for all pieces
         # (excludes pawn capture, castling, en passant)
         self.validMoves = bytearray((1,0,0,0,0,0,0,2,0,0,0,0,0,0,1,
@@ -294,7 +294,7 @@ class board():
                                      0,0,1,0,0,0,0,2,0,0,0,0,1,0,0,
                                      0,1,0,0,0,0,0,2,0,0,0,0,0,1,0,
                                      1,0,0,0,0,0,0,2,0,0,0,0,0,0,1,))
-        
+
         # shows pieces that can move to indicies in the validMoves array above
         self.pieceGroups = {1:(4,5,6,7,),
                             2:(1,2,4,5,6,7,),
@@ -303,23 +303,23 @@ class board():
                             5:(3,),
                             0:(5,),
                             7:(4,)}
-        
+
     def play(self, once=False, **kwargs):
         self.keys = bytearray(4)
-        
+
         self.curpos = 56        # cursor position 0-63 (64 places)
         self.selected = None    # cursor's selected location (1st enter)
-        
+
         self.fullMoves = []     # full moves and flags
         self.moveNum = 0        # keeps track of place in fullMoves
-        
+
         self.moveLog = []       # the printable move log
-        
+
         # bytearray of pieces moved (Ke1, Ke8, Ra1, Rh1, Ra8, Rh8)
         self.moveFlags = bytearray(6) # all initially 0
-        
+
         self.epFlag = 0
-        
+
         # get correct colors for bg and both players
         self.bg = kwargs.get("bg", None)
         self.c1 = kwargs.get("c1", None)
@@ -330,36 +330,36 @@ class board():
             self.c1 = "3;1"
         if self.c2 is None:
             self.c2 = "4;1"
-        
+
         # self.repaint (on the first run through repaint screen)
         self.repaint = True
-        
+
         # turn the cursor off and change the title to CHESS
         stdout.write("\x1b[?25l\x1b]0;CHESS\x07")
-        
+
         while True:
             if self.repaint:
                 stdout.write("\x1b[0;0H\x1b[J") # clear screen
                 self.repaint = False
-            
+
             stdout.write(str(self.getGraphicalChars()))     # print board only
-            
+
             for i,l in enumerate(self.moveLog[-10:]):
                 stdout.write("\x1b[{};24H{}".format(i + 2, l))
-            
+
             if self.checkmate():
                 print "\x1bcCHECKMATE"
                 exit(0)
-            
+
             # wait for user input
             setraw(self.fd)
             self.keys.insert(0,stdin.read(1))
             setat(self.fd, TCSADRAIN, self.old_settings)
             self.keys = self.keys[:self.buffer]
-            
+
             self.interpretKeys()
-    
-    
+
+
     def interpretKeys(self):
         # 'h' or '[left]'
         # move cursor left
@@ -371,7 +371,7 @@ class board():
             # cursor not in first column
             else:
                 self.curpos -= 1
-        
+
         # 'j' or '[down]'
         # move cursor down
         elif self.keys[0] == 106 or self.keys[2] == 27 and self.keys[1] == 91 and self.keys[0] == 66:
@@ -379,7 +379,7 @@ class board():
                 self.curpos -= 56
             else:
                 self.curpos += 8
-        
+
         # 'k' or '[up]'
         # move cursor up
         elif (self.keys[0] == 107 or
@@ -388,7 +388,7 @@ class board():
                 self.curpos += 56
             else:
                 self.curpos -= 8
-        
+
         # 'l' or '[right]'
         # move cursor right
         elif (self.keys[0] == 108 or
@@ -397,7 +397,7 @@ class board():
                 self.curpos -= 7
             else:
                 self.curpos += 1
-        
+
         # '[Enter]' or '[space]'
         # (1) select piece to move
         # (2) select square to move selected piece
@@ -413,23 +413,23 @@ class board():
                     return
                 if self.pieces[self.curpos] != 0:
                     self.selected = self.curpos
-            
+
             # second enter but same piece
             elif self.curpos == self.selected:
                 self.selected = None
                 return
-            
+
             # second enter
             else:
                 if not self.valMove():
                     return
-                
+
                 # self.fullMove["flag"] populated in valMove()
                 self.fullMove["from"] = self.selected
                 self.fullMove["to"] = self.curpos
                 self.fullMove["captured"] = self.pieces[self.curpos]
                 self.fullMove["victor"] = self.pieces[self.selected]
-                
+
                 # TODO properly implement all flags
                 if self.fullMove["flag"] == 1:
                     if self.moveNum % 2 == 0: # O-O-O
@@ -449,22 +449,22 @@ class board():
                     pass
                 elif self.fullMove["flag"] == 4: # promotion
                     pass
-                
+
                 # limit fullMoves (in case of previous undos)
                 if len(self.fullMoves) > self.moveNum:
                     self.fullMoves = self.fullMoves[:self.moveNum]
-                
+
                 # add fullMove to fullMoves for undo/redo
                 self.fullMoves.append(self.fullMove)
-                
+
                 # add move to move log
                 self.writeMoveLog()
-                
+
                 # replace the current position with previously self.selected location
                 self.pieces[self.curpos] = self.pieces[self.selected]
                 # replace the previously self.selected location with blank
                 self.pieces[self.selected] = "\x00"
-                
+
                 # TODO properly implement all flags
                 if self.fullMove["flag"] == 1:
                     if self.moveNum % 2 == 0: # O-O-O
@@ -485,7 +485,7 @@ class board():
                     self.pieces[self.epFlag] = 0
                 elif self.fullMove["flag"] == 4:
                     self.pieces[self.curpos] = self.promotion()
-                
+
                 # check move flags
                 if ((self.curpos == 60
                      or self.selected == 60)
@@ -498,39 +498,39 @@ class board():
                       and not self.moveFlags[1]
                 ):
                     self.moveFlags[1] = True
-                
+
                 if ( # rook a1 moved or taken
                     (self.curpos == 56
                      or self.selected == 56)
                     and not self.moveFlags[2]
                 ):
                     self.moveFlags[2] = True
-                
+
                 elif ( # rook h1 moved or taken
                       (self.curpos == 56
                        or self.selected == 56)
                       and not self.moveFlags[3]
                 ):
                     self.moveFlags[3] = True
-                
+
                 elif ( # rook a8 moved or taken
                       (self.curpos == 0
                        or self.selected == 0)
                       and not self.moveFlags[4]
                 ):
                     self.moveFlags[4] = True
-                
+
                 elif ( # rook h8 moved or taken
                       (self.curpos == 0
                        or self.selected == 7)
                       and not self.moveFlags[5]
                 ):
                     self.moveFlags[5] = True
-                
+
                 # NOTE: must occur before en passant possibility check
                 if self.epFlag != 0:
                     self.epFlag = 0
-                
+
                 # en passant possibility check for next move
                 if ( self.fullMove["victor"] == 6
                      and self.curpos - self.selected == -16
@@ -540,24 +540,24 @@ class board():
                        and self.curpos - self.selected == 16
                 ):
                     self.epFlag = self.curpos
-                
+
                 self.moveNum += 1
-                
+
                 self.selected = None
                 self.repaint = True
-        
+
         # 'ctrl+z'
         # undo
         elif self.keys[0] == 26:
             if self.moveNum == 0:
                 return
-            
+
             self.moveNum -= 1       # move pointer back one
             self.selected = None    # deselect piece if one is selected
-            
+
             # since writeMoveLog operates on fullMove, populate it
             self.fullMove = self.fullMoves[self.moveNum]
-            
+
             # transitioning from black to white move (backwards)
             if self.moveNum % 2 == 0:
                 # remove last thing written to log
@@ -572,12 +572,12 @@ class board():
                 self.moveLog.append(
                     bytearray(" ".join(str(extra).split(" ")[:-1]))
                 )
-            
+
             # victor goes back whence he came
             self.pieces[self.fullMove["from"]] = self.fullMove["victor"]
             # the captured piece is restored
             self.pieces[self.fullMove["to"]] = self.fullMove["captured"]
-            
+
             # TODO properly implement all flags
             # O-O-O
             if self.fullMove["flag"] == 1:
@@ -591,7 +591,7 @@ class board():
                     # move rook
                     self.pieces[0] = 9
                     self.pieces[3] = 0
-            
+
             # O-O
             elif self.fullMove["flag"] == 2:
                 # white move
@@ -604,7 +604,7 @@ class board():
                     # move rook
                     self.pieces[7] = 9
                     self.pieces[5] = 0
-            
+
             # en passant
             elif self.fullMove["flag"] == 3:
                 # override initial piece
@@ -619,30 +619,30 @@ class board():
                        or self.fullMove["from"] - self.fullMove["to"] == 7
                 ):
                     self.pieces[self.fullMove["from"] - 1] 
-            
+
             # promotion
             elif self.fullMove["flag"] == 4:
                 pass
-            
+
             self.repaint = True
-        
+
         # 'ctrl+y'
         # redo
         elif self.keys[0] == 25:
             if self.moveNum == len(self.fullMoves):
                 return
-            
+
             self.fullMove = self.fullMoves[self.moveNum]
-            
+
             self.writeMoveLog()
-            
+
             self.pieces[self.fullMove["from"]] = "\x00"
-            
+
             # victor reconquers
             self.pieces[self.fullMove["to"]] = self.fullMove["victor"]
             # victor leaves old square empty
             self.pieces[self.fullMove["from"]] = "\x00"
-            
+
             # TODO properly implement all flags
             if self.fullMove["flag"] == 1:
                 if self.moveNum % 2 == 0: # O-O-O
@@ -662,18 +662,18 @@ class board():
                 pass
             elif self.fullMove["flag"] == 4: # promotion
                 pass
-            
+
             self.moveNum += 1 # increment pointer to fullMove
-            
+
             self.selected = None # remove selected
-            
+
             self.repaint = True
-            
+
         # 'ctrl+r'
         # refresh
         elif self.keys[0] == 18:
             self.repaint = True
-        
+
         # '[Backspace]'
         # '[Del]'
         elif ( self.keys[0] == 127
@@ -683,7 +683,7 @@ class board():
                  and self.keys[0] == 126)
         ):
             self.selected = None
-        
+
         # 'ctrl+c'
         # resign
         # "after pawn e4, black resigned!" :P
@@ -692,21 +692,21 @@ class board():
                 exit(0)
             stdout.write("\x1b[m\x1b[?25l")
             self.repaint = True
-        
+
         # 'ctrl+d'
         # exit
         elif self.keys[0] == 4:
             raise SystemExit()
-        
+
         # '?'
         # help
         elif self.keys[0] == 63:
             self.repaint = not self.help()
-        
+
         else:
             pass #print list(self.keys)
-    
-    
+
+
     def valMove(self):
         # piece attacking is black
         if self.pieces[self.selected] > 6:
@@ -716,7 +716,7 @@ class board():
                     and not self.pieceBetween()             # no piece between
                     and not self.kingAttacked()             # king not attacked
                    )
-        
+
         # piece attacking is white
         elif self.pieces[self.selected] > 0:
             return (
@@ -725,12 +725,12 @@ class board():
                     and not self.pieceBetween()             # no piece between
                     and not self.kingAttacked()             # king not attacked
                    )
-        
-    
+
+
     def sloppyVal(self):
         # create a NEW dict to avoid referencing old (same) dict
         self.fullMove = dict(flag = 0)
-        
+
         if self.pieces[self.selected] == 1: # white king selected
             if ( # O-O-O
                 self.curpos - self.selected == -2 # king moved two left
@@ -740,7 +740,7 @@ class board():
             ):
                 self.fullMove["flag"] = 1 # O-O-O
                 return True
-            
+
             elif ( # O-O
                    self.curpos - self.selected == 2 # king moved two right
                    and self.pieces[61] + self.pieces[62] == 0 # piece sum = 0
@@ -749,7 +749,7 @@ class board():
             ):
                 self.fullMove["flag"] = 2 # O-O
                 return True
-            
+
         elif self.pieces[self.selected] == 7: # black king selected
             if ( # O-O-O
                 self.curpos - self.selected == -2 # king moved two left
@@ -759,7 +759,7 @@ class board():
             ):
                 self.fullMove["flag"] = 1 # O-O-O
                 return True
-                
+
             elif ( # O-O
                   self.curpos - self.selected == 2 # king moved two right
                   and self.pieces[5] + self.pieces[6] == 0 # piece sum = 0
@@ -768,14 +768,14 @@ class board():
             ):
                 self.fullMove["flag"] = 2
                 return True
-            
+
             #if (
             #    not self.moveFlags[0] # 
             #    and (self.curpos - self.selected == -2
             #         or self.curpos - self.selected == 2)
             #):
             #    return True
-        
+
         # white pawn selected
         elif self.pieces[self.selected] == 6:
             # moved two first move
@@ -783,7 +783,7 @@ class board():
                  and self.pieces[self.selected - 8] == 0
             ):
                 return True
-            
+
             # moved one row forward
             elif self.curpos / 8 - self.selected / 8 == -1:
                 # piece moved straight (not diag)
@@ -805,16 +805,16 @@ class board():
                 ):
                     self.fullMove["flag"] = 3
                     return True
-                
+
                 # taking diag
                 elif ( self.curpos - self.selected == -9
                        or self.curpos - self.selected == -7
                 ):
                     return True
-                
+
                 else:
                     return False
-        
+
         # black pawn selected
         elif self.pieces[self.selected] == 12:
             if self.curpos - self.selected == 16 and self.pieces[self.curpos] == 0:
@@ -825,7 +825,7 @@ class board():
                         return True
                     else:
                         return False
-                
+
                 # en passant
                 elif ( self.epFlag != 0
                        and ( (self.selected == self.epFlag - 1
@@ -836,7 +836,7 @@ class board():
                 ):
                     self.fullMove["flag"] = 3
                     return True
-                
+
                 # taking diag
                 elif ( self.curpos - self.selected == 9
                        or self.curpos - self.selected == 7
@@ -844,7 +844,7 @@ class board():
                     return True
                 else:
                     return False
-        
+
         return self.validMoves[
                    112
                    + (self.curpos % 8 - self.selected % 8)
@@ -853,8 +853,8 @@ class board():
                ] in self.pieceGroups[
                         self.pieces[self.selected] % 6
                     ]
-    
-    
+
+
     def kingAttacked(self, moveNum = None):
         # TODO
         # back diagonals
@@ -865,8 +865,8 @@ class board():
                     break
             kingPosx = p % 8
             kingPosy = p / 8
-            
-            
+
+
             # check back diagonal: like \
             # check top-left
             for x,y in zip(xrange(kingPosx-1,-1,-1),xrange(kingPosy-1,-1,-1)):
@@ -877,7 +877,7 @@ class board():
                 # piece black queen or bishop
                 elif p == 8 or p == 10:
                     return True
-            
+
             # check bottom-right
             for x,y in zip(xrange(kingPosx+1,8),xrange(kingPosy+1,8)):
                 p = self.pieces[y * 8 + x]
@@ -887,7 +887,7 @@ class board():
                 # piece black queen or bishop
                 elif p == 8 or p == 10:
                     return True
-                
+
             # check forward diagonal: like /
             # check top-right
             for x,y in zip(xrange(kingPosx+1,8),xrange(kingPosy-1,-1,-1)):
@@ -898,7 +898,7 @@ class board():
                 # piece black queen or bishop
                 elif p == 8 or p == 10:
                     return True
-            
+
             # check bottom-left
             for x,y in zip(xrange(kingPosx-1,-1,-1),xrange(kingPosy+1,8)):
                 p = self.pieces[y * 8 + x]
@@ -908,7 +908,7 @@ class board():
                 # piece black queen or bishop
                 elif p == 8 or p == 10:
                     return True
-            
+
             # check vertical: like |
             # check top
             for y in xrange(kingPosy-1,-1,-1):
@@ -918,7 +918,7 @@ class board():
                 # piece black queen or rook
                 elif p == 8 or p == 9:
                     return True
-            
+
             # check bottom
             for y in xrange(kingPosy+1,8):
                 p = self.pieces[y * 8 + kingPosx]
@@ -928,7 +928,7 @@ class board():
                 # piece black queen or rook
                 elif p == 8 or p == 9:
                     return True
-            
+
             # check horizontal: like -
             # check left
             for x in xrange(kingPosx-1,-1,-1):
@@ -939,7 +939,7 @@ class board():
                 # piece black queen or rook
                 elif p == 8 or p == 9:
                     return True
-            
+
             # check right
             for x in xrange(kingPosx+1,8):
                 p = self.pieces[kingPosy * 8 + x]
@@ -949,7 +949,7 @@ class board():
                 # piece black queen or rook
                 elif p == 8 or p == 9:
                     return True
-            
+
             # check knights
             for x,y in zip((-1,1,-2,2,-2,2,-1,1),(-2,-2,-1,-1,1,1,2,2)):
                 if ( kingPosx + x < 0 or kingPosx + x > 7
@@ -960,7 +960,7 @@ class board():
                 # piece black knight 
                 if p == 11:
                     return True
-            
+
             # check pawns
             # king below rank 7
             if kingPosy > 1:
@@ -974,25 +974,25 @@ class board():
                     # pawn up-right attacking king
                     if self.pieces[(kingPosy - 1) * 8 + kingPosx + 1] == 7:
                         return True
-            
+
             return False
         else:
             return False
-        
-            
+
+
     def checkmate(self, moveNum = None):
         if not self.kingAttacked(moveNum):
             return False
-        
+
         if (self.moveNum if moveNum is None else moveNum) % 2 == 0:
             for x in xrange(64):
                 if self.pieces[x] == 1:
                     kingPos = x
-            
+
             self.pieces[kingPos] = 0
             # imitate selecting a piece with cursor
             self.selected = kingPos
-            
+
             for x in xrange(-1,2):
                 for y in xrange(-1,2):
                     if x == 0 and y == 0:
@@ -1005,7 +1005,7 @@ class board():
                         self.pieces[self.curpos] = 0
                         self.pieces[self.selected] = 1
                         return False
-            
+
             #self.pieces[self.curpos] = 0
             #self.pieces[self.selected] = 1
             return True
@@ -1013,15 +1013,15 @@ class board():
             for x in xrange(64):
                 if self.pieces[x] == 7:
                     kingpPos = x
-        
-                
-                
-    
-    
+
+
+
+
+
     def pieceBetween(self):
         dx = self.curpos % 8 - self.selected % 8 # delta x
         dy = self.curpos / 8 - self.selected / 8 # delta y
-        
+
         if dx == 0 and dy == 0: # impossible for now (taken care of elsewhere)
             return True
         elif dy == 0:
@@ -1032,7 +1032,7 @@ class board():
                 if self.pieces[dx] != 0:
                     return True
             return False
-        
+
         elif dx == 0:
             # dy represents +/- 8 for moving piece down/up ==> conserves memory
             dy = 8 if self.curpos > self.selected else - 8
@@ -1041,10 +1041,10 @@ class board():
                 if self.pieces[dy] != 0:
                     return True
             return False
-        
+
         elif abs(dx) != abs(dy): # most likely a knight ==> otherwise, another filter should (and does) catch this
             return False
-        
+
         elif abs(dx) == abs(dy):
             # dx represents +/- 7/9 for moving piece along diags ==> conserves memory (if piece wraps around to other side, another filter should - and does - catch this
             if dx < 0 and dy < 0:
@@ -1062,14 +1062,14 @@ class board():
             return False
         else:
             return False
-    
-    
+
+
     def writeMoveLog(self):
         if self.moveNum % 2 == 0:
             self.moveLog.append(bytearray())
             self.moveLog[-1].extend("{}.".format(self.moveNum / 2 + 1))
         self.moveLog[-1].extend(" ")
-        
+
         # check for special moves
         if self.fullMove["flag"] == 1: # O-O
             self.moveLog[-1].extend("O-O-O")
@@ -1080,7 +1080,7 @@ class board():
         elif self.fullMove["flag"] == 4: # pawn promotion
             # TODO
             return
-        
+
         if self.fullMove["victor"] % 6 != 0:
             self.moveLog[-1].extend(self.pieceMap[self.fullMove["victor"]])
         if self.fullMove["captured"] != 0 or self.fullMove["flag"] == 3: # piece captured or en passant
@@ -1095,12 +1095,12 @@ class board():
                 self.moveLog[-1].extend(chr(56 - self.fullMove["from"] / 8))
         self.moveLog[-1].extend(chr(self.fullMove["to"] % 8 + 97))
         self.moveLog[-1].extend(chr(56 - self.fullMove["to"] / 8))
-    
+
         if self.fullMove["flag"] == 3: # en passant
             self.moveLog[-1].extend("e.p.")
             return
-    
-    
+
+
     def promotion(self):
         if self.moveNum % 2 == 0:
             piece = 2
@@ -1112,12 +1112,12 @@ class board():
             self.keys.insert(0,stdin.read(1))
             setat(self.fd, TCSADRAIN, self.old_settings)
             self.keys = self.keys[:self.buffer]
-            
+
             if self.keys[0] == 13 or self.keys[0] == 32: # '[space]' or '[Enter]'
                 pass
             else:
                 self.interpretKeys()
-    
+
     def help(self):
         rows, cols = popen('stty size', 'r').read().split()
         if int(rows) < 22 or int(cols) < 79:
@@ -1156,8 +1156,8 @@ class board():
             setat(self.fd, TCSADRAIN, self.old_settings)
             return False
         return True
-    
-    
+
+
     def getGraphicalChars(self):
         gr = bytearray("\x1b[0;0H\x1b[4{0}m\x1b[0;4H? = help\x1b[m\n   \x1b[4{0}m╔═════════════════╗".format(self.bg)) # graphical representation of pieces
         #gr = bytearray("\x1b[0;0H\x1b[4{0}m\x1b[0;4H? = help\x1b[m\n   \x1b[4{0}m╭─────────────────╮".format(self.bg)) # graphical representation of pieces
