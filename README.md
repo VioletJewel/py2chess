@@ -1,5 +1,5 @@
-chess
-=====
+py2chess
+========
 
 Play chess in the terminal with Python 2!
 
